@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 0.3.3" src="https://img.shields.io/badge/version-0.3.3-681D32?style=for-the-badge&amp;labelColor=21151D">
+  <img alt="Version 0.4.0" src="https://img.shields.io/badge/version-0.4.0-681D32?style=for-the-badge&amp;labelColor=21151D">
   <img alt="Chrome Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest_V3-EBD6AC?style=for-the-badge&amp;labelColor=21151D&amp;logo=googlechrome&amp;logoColor=white">
   <img alt="Private beta" src="https://img.shields.io/badge/status-private_beta-BA8B59?style=for-the-badge&amp;labelColor=21151D">
   <img alt="Runs in your browser" src="https://img.shields.io/badge/runtime-local_browser-496E61?style=for-the-badge&amp;labelColor=21151D">
@@ -46,6 +46,7 @@ Writing a novel is difficult enough. Moving dozens of chapters between Markdown 
 - **Revise existing work carefully.** Match chapter numbers, capture original content before changes, and check saved replacements by reopening them.
 - **Keep progress locally.** Imported content and queue state stay in your Chrome profile, with pause/resume controls.
 - **Move the floating workspace.** Drag the branded top bar wherever it is convenient. Chrome remembers its position, and ↖ resets it to the upper-right corner.
+- **Choose a safe pace.** Fast (1.5 s), balanced (3 s), careful (5 s) or a custom 1–15 s pause between chapters. The queue also waits for page/editor readiness.
 
 <table>
   <tr>
@@ -56,9 +57,9 @@ Writing a novel is difficult enough. Moving dozens of chapters between Markdown 
   <tr><td>Bulk Markdown upload</td><td>Sequential, chapter-number-aware import</td><td>Available</td></tr>
   <tr><td>Draft workflow</td><td>Save chapters without publishing</td><td>Available · verify on Inkstone</td></tr>
   <tr><td>Publish Now</td><td>Submit chapters for immediate publication</td><td>Assisted automation</td></tr>
-  <tr><td>Publish Timer</td><td>Multiple release slots per day, Berlin time planning</td><td>Beta · manual confirmation may be required</td></tr>
-  <tr><td>Replace chapters</td><td>Backup-first replacement with saved-content verification</td><td>Beta · live verification in progress</td></tr>
-  <tr><td>Delete chapters</td><td>Backup export and explicit confirmation required</td><td>Guarded operation</td></tr>
+  <tr><td>Publish Timer</td><td>Multiple release slots per day, Berlin time planning and known picker support</td><td>Beta · falls back to manual confirmation</td></tr>
+  <tr><td>Replace chapters</td><td>Backup-first replacement, TinyMCE integration and saved-content verification</td><td>Beta · live verification in progress</td></tr>
+  <tr><td>Delete chapters</td><td>Backup export, typed confirmation and manual Trash verification</td><td>Guarded · never marks a click as confirmed deletion</td></tr>
 </table>
 
 > [!IMPORTANT]
@@ -85,21 +86,23 @@ The floating panel is designed to stay close to the job at hand:
 
 **Requirements:** Desktop Google Chrome or a Chromium browser that supports unpacked Manifest V3 extensions, access to your own Inkstone author account, and chapter files in UTF-8 Markdown format.
 
-**Install the current source version (v0.3.3):**
+**Install the current source version (v0.4.0):**
 
 1. From this repository, choose **Code → Download ZIP** and extract it to a permanent folder. Make sure the extension folder contains `manifest.json`.
 2. Open `chrome://extensions` in Google Chrome.
 3. Enable **Developer mode**, then click **Load unpacked**.
 4. Select the extracted folder that actually contains `manifest.json` (the repository root, or `inkstone-uploader-pro` inside the standalone ZIP).
-5. Refresh your WebNovel Inkstone chapter management page. The **Chapter Studio v0.3.3** panel should appear.
+5. Refresh your WebNovel Inkstone chapter management page. The **Chapter Studio v0.4.0** panel should appear.
 
-**Already installed an older copy?** If a panel labelled `Inkstone Uploader PRO Independent v0.2.2` or Chapter Studio v0.3.0–v0.3.2 is still running, disable or remove the old installation first. Two installations on the same page can interfere with each other. Never start a new batch while an earlier one is still running. After upgrading, clear unfinished old replacement queues and scan again.
+**Already installed an older copy?** If a panel labelled `Inkstone Uploader PRO Independent v0.2.2` or Chapter Studio v0.3.x is still running, disable or remove the old installation first. Two installations on the same page can interfere with each other. Never start a new batch while an earlier one is still running. After upgrading, clear unfinished old queues and scan again; pre-v0.4.0 jobs cannot be resumed.
+
+**Download note:** GitHub's **Code → Download ZIP** is the source of the current version. The separate product website may still offer an older extension build; check the manifest version before installing.
 
 ### Your first 60 seconds
 
 1. Open a novel's chapter page in Inkstone.
 2. Select **Upload** and choose **one** `.md` file.
-3. Keep **Save as Draft** selected.
+3. Keep **Save as Draft** and **Balanced — 3 seconds** selected.
 4. Run the import, then open that draft manually in Inkstone and inspect its title and body.
 
 This single-chapter draft test is the recommended way to validate the extension before using publishing or replacement actions.
@@ -168,6 +171,8 @@ Select **Publish Now** only when the imported chapters are approved for immediat
 3. Review the generated preview and optionally export the plan as CSV.
 4. Confirm the date and time in Inkstone when prompted; the extension can pause for manual verification of custom calendar controls.
 
+**Beta behavior:** The extension will try known native and custom calendar/time controls, then require the exact GMT+8 conversion preview before it can auto-confirm. Unsupported pickers stop at a guided manual checkpoint. Never assume a plan in the panel means a chapter was scheduled on Inkstone.
+
 Default example for four chapters per day:
 
 ```text
@@ -198,7 +203,7 @@ For existing chapters, use the guided workflow:
 2. Import the target `.md` files or select visible chapters for deletion.
 3. **Scan** and verify exact chapter-number matches.
 4. For **Replace**, click **Back up & replace matched chapters**, then confirm. The extension automatically backs up each original inside Chrome before editing any chapter. It then submits Save/Update, reopens each chapter, and compares the saved title and body before advancing. A mismatch stops the queue.
-5. For **Delete**, use **Back up original chapters**, then download the backup file and provide the typed confirmation before deleting anything.
+5. For **Delete**, use **Back up original chapters**, then download the backup file and provide the typed confirmation before deleting anything. After a deletion attempt, **verify the chapter is absent from Published and present in Trash** before selecting **I verified deletion; next**. If the Delete control is unknown, the extension stops and guides you to perform that individual removal manually.
 
 The backup file is an optional external safety copy for replacement. Internally captured backups stay in Chrome's extension storage. To keep a backup even if you uninstall Chrome or the extension, use **Download safety backup** after the originals have been captured.
 
@@ -210,7 +215,7 @@ Chapter matching is intentionally strict. Missing or duplicate chapter numbers s
 
 1. **Identify:** Each `.md` file is mapped to exactly one chapter number from the visible Inkstone list.
 2. **Protect:** The original text and title are captured to local extension storage before any chapter is changed.
-3. **Replace:** The title and manuscript text are inserted into the editor and Save/Update is submitted.
+3. **Replace:** The title and manuscript text are inserted through the editor (using TinyMCE's own API when present), then Save/Update is submitted.
 4. **Reopen:** The chapter is loaded again and compared with the intended title and text.
 5. **Stop on disagreement:** A mismatch, missing editor, duplicate number or unexpected dialog pauses the queue for manual inspection.
 
@@ -234,11 +239,12 @@ The extension runs **inside your Chrome browser** on the supported Inkstone page
 | Symptom | Likely reason | What to do |
 | --- | --- | --- |
 | **Replace button is disabled** | The scan has no unique match or the queue is running. | Open **Published**, import numbered `.md` files, click **Scan**, and check `matched` and `problems`. |
-| **Chapter opens and closes without changing** | You may be in the backup pass or the editor rejected the Save action. | In v0.3.2 use **Back up & replace matched chapters**, then inspect the status. A paused error is not a successful replacement. |
-| **Old PRO panel still appears** | An earlier extension installation is active. | Disable v0.2.x and reload the page with just Chapter Studio v0.3.2 enabled. |
+| **Chapter opens and closes without changing** | You may be in the backup pass or the editor rejected the Save action. | In v0.4.0 use **Back up & replace matched chapters**, then inspect the status and reopening verification. A paused error is not a successful replacement. |
+| **Old PRO panel still appears** | An earlier extension installation is active. | Disable v0.2.x/v0.3.x and reload the page with only Chapter Studio v0.4.0 enabled. |
 | **Only 15 chapters are found** | The current Inkstone list may be paginated. | Scan each relevant page and process only chapters visible on that page. |
 | **Wrong chapter title** | The filename becomes the title. | Rename the `.md` file to the exact intended title, e.g. `CH01 - Exile.md`. |
 | **Scheduling pauses at timer** | Inkstone uses a custom picker or the converted time cannot be verified. | Set the **local** time manually, inspect the converted GMT+8 preview, and confirm inside Inkstone. |
+| **Delete paused after clicking** | The extension will not infer that a destructive action succeeded just because a button was clicked. | Check **Published** and **Trash**, then press **I verified deletion; next**. |
 | **No Save/Update button detected** | The Inkstone editor UI changed or more than one control matches. | Stop the queue, review the unsaved editor and report the visible status. |
 
 ## Frequently asked questions
@@ -286,8 +292,11 @@ Not at this stage. This is a privately distributed, unpacked Chrome extension. C
 - [x] Draft mode and publishing-plan preview
 - [x] Local backup capture and guarded replacement workflow
 - [x] Single-start backup-first replacement (v0.3.2)
+- [x] Floating panel positioning, persistent placement and reset (v0.3.3)
+- [x] Configurable, persisted chapter delay (v0.4.0)
+- [x] TinyMCE MAIN-world bridge and safer Delete verification checkpoint (v0.4.0)
 - [x] Automated core logic tests and version consistency checks
-- [ ] Verified end-to-end Save/Update behavior against the current live Inkstone editor
+- [ ] Verified end-to-end Save/Update, timer picker and Delete behavior against the current live Inkstone editor
 - [ ] Optional built-in restore action from captured backups
 - [ ] More detailed per-chapter success/error log and downloadable execution report
 - [ ] Richer chapter preview with metadata and word counts
@@ -298,7 +307,8 @@ Not at this stage. This is a privately distributed, unpacked Chrome extension. C
 ```bash
 node --check src/core.js
 node --check src/content.js
-node --test tests/core.test.cjs tests/branding.test.cjs
+node --check src/editor-bridge.js
+node --test tests/core.test.cjs tests/branding.test.cjs tests/editor-bridge.test.cjs
 ```
 
 The project uses Chrome Manifest V3 with JavaScript and CSS; it does not require a build step or a separate server. Chrome controls are accessed through a content script. The core module isolates chapter parsing and scheduling math for repeatable tests.
@@ -307,6 +317,7 @@ The project uses Chrome Manifest V3 with JavaScript and CSS; it does not require
 assets/                 Brand assets, product illustrations and browser icons
 src/core.js             Chapter parsing, matching and release planning
 src/content.js          Inkstone workflow and panel logic
+src/editor-bridge.js    Limited TinyMCE bridge running in Chrome MAIN world
 src/panel.css           BRINKHAGEN visual theme
 tests/                  Automated logic and branding checks
 .github/workflows/       Continuous integration
@@ -321,6 +332,7 @@ CHANGELOG.md            Version history
 | `node --check` | JavaScript syntax validity |
 | `tests/core.test.cjs` | Filename parsing, chapter matching and release-time calculations |
 | `tests/branding.test.cjs` | Manifest, icon files and expected panel characteristics |
+| `tests/editor-bridge.test.cjs` | TinyMCE write and ambiguous-editor refusal |
 | `tests/ui-smoke.cjs` | Browser-rendered smoke test when Playwright Chromium is installed |
 
 **Limit:** Passing these checks does not certify that the current Inkstone UI will save or publish content. Live editor behavior still requires targeted validation.

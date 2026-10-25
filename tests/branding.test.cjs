@@ -11,7 +11,9 @@ test('manifest uses BRINKHAGEN branding and valid Chrome icons', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(base, 'manifest.json'), 'utf8'));
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.name, 'BRINKHAGEN Chapter Studio');
-  assert.equal(manifest.version, '0.3.3');
+  assert.equal(manifest.version, '0.4.0');
+  assert.equal(manifest.content_scripts[0].world, 'MAIN');
+  assert.ok(manifest.content_scripts[0].js.includes('src/editor-bridge.js'));
   for (const size of [16, 32, 48, 128]) {
     const file = path.join(base, manifest.icons[size]);
     const icon = fs.readFileSync(file);
@@ -35,5 +37,9 @@ test('panel includes logo, version and copyright while preserving stored queue',
   assert.match(script, /installPanelDrag/);
   assert.match(script, /PANEL_POSITION_KEY/);
   assert.match(script, /reset-position/);
+  assert.match(script, /Chapter processing speed/);
+  assert.match(script, /await-delete-verification/);
+  assert.match(script, /Inspect Inkstone UI/);
+  assert.doesNotMatch(script, /const update = actionButton\(\['Update', 'Edit', 'Modify'\]\)/);
   assert.doesNotMatch(script, /!backupReady \|\| !state\.backupExported/);
 });

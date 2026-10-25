@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BRINKHAGEN Chapter Studio",
   "short_name": "Chapter Studio",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "BRINKHAGEN publishing workspace for Inkstone: Markdown chapters, drafts, schedules, backups and editing.",
   "icons": {
     "16": "assets/icon16.png",
@@ -16,6 +16,15 @@
     "https://www.webnovel.com/inkstone/*"
   ],
   "content_scripts": [
+    {
+      "matches": [
+        "https://inkstone.webnovel.com/*",
+        "https://www.webnovel.com/inkstone/*"
+      ],
+      "js": ["src/editor-bridge.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
     {
       "matches": [
         "https://inkstone.webnovel.com/*",

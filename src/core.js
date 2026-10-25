@@ -145,7 +145,15 @@
     };
   }
 
-  const api = Object.freeze({chapterNumber, titleFromFilename, markdownToPlain, normalizeTitle, pairChapters, berlinTimeToUtc, createSchedule, localTimerFields, clampPanelPosition});
+  function normalizeDelayMs(value) {
+    const delay = Number(value);
+    if (!Number.isInteger(delay) || delay < 1000 || delay > 15000) {
+      throw new Error('Chapter delay must be between 1,000 and 15,000 milliseconds.');
+    }
+    return delay;
+  }
+
+  const api = Object.freeze({chapterNumber, titleFromFilename, markdownToPlain, normalizeTitle, pairChapters, berlinTimeToUtc, createSchedule, localTimerFields, clampPanelPosition, normalizeDelayMs});
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.InkstoneProCore = api;
 })();

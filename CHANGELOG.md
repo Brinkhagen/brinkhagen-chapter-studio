@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — Controlled chapter workflows (2026-10-26)
+
+- Adds selectable processing delays: 1.5, 3, 5 or custom 1–15 seconds, persisted in Chrome and enforced between chapters across navigation.
+- Adds a narrow page-context TinyMCE bridge to write chapter text through the editor's own content and change APIs; refuses ambiguous editor instances.
+- Removes the dangerous blind `Update` click when discovering the chapter editor.
+- Attempts recognized custom date/time picker controls, verifies the rendered GMT+8 preview and pauses for guided manual confirmation when unsupported.
+- Makes deletion pause at a verification checkpoint after a native confirmation, or before removal when Inkstone's Delete control cannot be identified. No click alone counts as a confirmed deletion.
+- Expands automated unit tests for chapter pacing and TinyMCE editing.
+- Adds a non-destructive Inkstone UI diagnostics button for identifying missing editor, timer and deletion controls without exposing chapter text.
+- **Not yet live-validated** against a signed-in current Inkstone session; authors should test with a disposable chapter first.
+
 ## 0.3.3 — Movable floating window (2026-10-25)
 
 - Drag the Chapter Studio header to move the floating panel anywhere within the browser viewport.

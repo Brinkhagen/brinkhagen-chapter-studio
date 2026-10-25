@@ -8,7 +8,7 @@
   const PANEL_POSITION_KEY = 'inkstoneProPanelPositionV1';
   const SESSION_KEY = 'inkstoneProRunId';
   const DELAY = 1000;
-  const SCHEMA_VERSION = 3;
+  const SCHEMA_VERSION = 4;
   let busy = false;
   let scheduled = null;
   let minimized = false;
@@ -74,6 +74,7 @@
     backups: [], backupExported: false, job: null,
     delivery: 'draft', scheduleStartDate: initialStartDate(),
     schedulePerDay: 4, scheduleTimes: '08:00, 12:00, 16:00, 20:00',
+    delayMs: 3000, customDelayMs: 7500,
     autoConfirmSchedule: false,
     note: 'Select your Markdown files to begin.'
   });
@@ -142,6 +143,12 @@
     const matches = scope.filter(el => words.some(word => new RegExp(`^${word}$`, 'i').test(clickableText(el))));
     return matches.length === 1 ? matches[0] : null;
   }
+  function dialogButton(dialog, words) {
+    if (!dialog) return null;
+    const buttons=[...dialog.querySelectorAll('button, [role=button], input[type=submit]')]
+      .filter(el=>visible(el) && words.some(word=>new RegExp(`^${word}$`,'i').test(clickableText(el))));
+    return buttons.length===1 ? buttons[0] : null;
+  }
   function publishDialog() {
     return candidates('[role=dialog], .ant-modal, .modal, .el-dialog')
       .find(el => /confirm publish|publish timer/i.test(el.textContent));
@@ -169,6 +176,40 @@
     const time=inputs.filter(el=>el.type==='time' || /time|\d{1,2}:\d{2}/i.test([el.placeholder,el.value,el.getAttribute('aria-label')].join(' ')));
     return {date:date.length===1?date[0]:null,time:time.length===1?time[0]:null};
   }
+  function pickerPopups() {
+    return candidates('.ant-calendar-picker-container, .ant-calendar, .ant-picker-dropdown, .ant-time-picker-panel, .rc-calendar, .rc-picker-dropdown, .rc-time-picker-panel');
+  }
+  async function chooseCustomDate(input, isoDate) {
+    input.click();
+    await pause(280);
+    const readable=new Date(`${isoDate}T12:00:00Z`).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',timeZone:'UTC'});
+    const titles=[isoDate,isoDate.replace(/-/g,'/'),readable];
+    const matches=[...new Set(pickerPopups().flatMap(popup=>[...popup.querySelectorAll('td[title], button[title], [data-date], [aria-label]')]))]
+      .filter(el=>visible(el) && titles.some(label=>[el.getAttribute('title'),el.getAttribute('data-date'),el.getAttribute('aria-label')].includes(label)));
+    if(matches.length!==1) return false;
+    matches[0].click();
+    await pause(250);
+    return input.value.replace(/-/g,'/')===isoDate.replace(/-/g,'/');
+  }
+  async function chooseCustomTime(input, localTime) {
+    input.click();
+    await pause(280);
+    const parts=localTime.split(':').map(Number);
+    for(let index=0;index<2;index++) {
+      const columns=[...new Set(pickerPopups().flatMap(popup=>[...popup.querySelectorAll('.ant-time-picker-panel-select, .ant-picker-time-panel-column, .rc-time-picker-panel-select')]))]
+        .filter(visible);
+      if(columns.length<2) return false;
+      const options=[...columns[index].querySelectorAll('li, [role=option], button')]
+        .filter(el=>visible(el) && /^\d{1,2}$/.test(el.textContent.trim())
+          && Number(el.textContent.trim())===parts[index]
+          && !el.classList.contains('ant-time-picker-panel-select-option-disabled')
+          && el.getAttribute('aria-disabled')!=='true');
+      if(options.length!==1) return false;
+      options[0].click();
+      await pause(220);
+    }
+    return input.value.slice(0,5)===localTime;
+  }
   async function preparePublishTimer(entry) {
     const dialog=publishDialog();
     if(!dialog) throw new Error('Publish Timer dialog not found. No publication confirmed.');
@@ -186,8 +227,12 @@
     const {date,time}=findTimerInputs(dialog);
     if(!date||!time) throw new Error(`Set LOCAL date ${local.date} and time ${local.time} manually (expected conversion: ${entry.inkstoneDate} ${entry.inkstoneTime} GMT+8).`);
     const desiredDate=date.type==='date'?entry.berlinDate:local.date;
-    if(date.readOnly || time.readOnly)throw new Error(`Timer uses a custom picker. Set LOCAL ${local.date} ${local.time} manually, NOT ${entry.inkstoneTime} (GMT+8).`);
-    setNativeValue(date,desiredDate);setNativeValue(time,local.time);
+    if(date.readOnly) {
+      if(!await chooseCustomDate(date,entry.berlinDate)) throw new Error(`Custom calendar could not select ${local.date} automatically.`);
+    } else setNativeValue(date,desiredDate);
+    if(time.readOnly) {
+      if(!await chooseCustomTime(time,local.time)) throw new Error(`Custom clock could not select ${local.time} automatically.`);
+    } else setNativeValue(time,local.time);
     date.blur();time.blur();
     await pause(300);
     const dateValue=date.value.replace(/-/g,'/');
@@ -198,7 +243,7 @@
     // Text boxes in custom frameworks can display values without committing their state.
     const expectedConverted=`${entry.inkstoneDate.replace(/\//g,'-')} ${entry.inkstoneTime}`;
     const convertedText=(dialog.textContent||'').replace(/\s+/g,' ');
-    return date.type==='date' && time.type==='time' && convertedText.includes(expectedConverted);
+    return convertedText.includes(expectedConverted);
   }
   function findTitleInput() {
     const known=candidates('.input_title--plhUv, input[placeholder="Title Here"]');
@@ -250,16 +295,39 @@
     return !!findTitleInput() && !!document.querySelector('iframe.tox-edit-area__iframe');
   }
   async function ensureEditor() {
-    let data = readEditor();
-    if (data) return data;
-    // WebNovel's documented chapter editor may require a separate Update click.
-    const update = actionButton(['Update', 'Edit', 'Modify']);
-    if (update) {
-      update.click();
-      await pause(900);
-      data = readEditor();
+    // Never click "Update" to *find* an editor: on Inkstone that button can
+    // submit edits. Wait for the actual title and body instead.
+    for (let attempt=0; attempt<8; attempt++) {
+      const editor = readEditor();
+      if (editor) return editor;
+      await pause(350);
     }
-    return data;
+    return null;
+  }
+
+  function writeTinyMCE(text) {
+    return new Promise((resolve, reject) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const response = 'brinkhagen:tinymce:result';
+      let timer;
+      const stop = () => {
+        clearTimeout(timer);
+        document.removeEventListener(response, onResult);
+      };
+      const onResult = event => {
+        let reply;
+        try {reply=JSON.parse(event.detail);} catch {return;}
+        if (reply?.id !== id) return;
+        stop();
+        if(reply.ok) resolve();
+        else reject(new Error(`TinyMCE write refused: ${reply.error || 'unknown error'}`));
+      };
+      document.addEventListener(response,onResult);
+      timer=setTimeout(()=>{stop();reject(new Error('TinyMCE bridge unavailable. No Save action attempted.'));},2500);
+      document.dispatchEvent(new CustomEvent('brinkhagen:tinymce:set',{
+        detail:JSON.stringify({id,text})
+      }));
+    });
   }
   function setNativeValue(el, value) {
     const prototype = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -290,13 +358,14 @@
     el.dispatchEvent(new Event('change', {bubbles:true}));
     el.blur();
   }
-  function fillEditor(name, raw) {
+  async function fillEditor(name, raw) {
     const title = findTitleInput(), body = findBodyField();
     if (!title || !body) throw new Error('Cannot identify unique title and body fields. No edits were made.');
     const content = Core.markdownToPlain(raw);
     if (content.length < 25) throw new Error('File body is too short; refused to replace chapter.');
     setNativeValue(title, Core.titleFromFilename(name));
-    if (body.isContentEditable) setRichText(body, content);
+    if (body.isContentEditable && body.ownerDocument !== document) await writeTinyMCE(content);
+    else if (body.isContentEditable) setRichText(body, content);
     else setNativeValue(body, content);
     return {title: Core.titleFromFilename(name), chars: content.length};
   }
@@ -357,9 +426,9 @@
   }
   async function returnToList(state) {
     const job = state.job;
-    await advance(state,{index:job.index+1,phase:'list'});
+    await advance(state,{index:job.index+1,phase:'list',readyAt:Date.now()+job.delayMs});
     if (location.href !== job.listUrl) reroute(job.listUrl);
-    else scheduleRun(DELAY);
+    else scheduleRun(job.delayMs);
   }
   async function runBackup(state) {
     const job = state.job;
@@ -434,7 +503,7 @@
     if (normalizedBody(chapter.body) !== normalizedBody(backup.body)) {
       throw new Error(`Chapter ${entry.number} changed since the backup. Refresh your scan and backup before replacing.`);
     }
-    fillEditor(file.name, file.text);
+    await fillEditor(file.name, file.text);
     await pause(300);
     const staged = readEditor();
     if (!staged || staged.title.trim() !== expectedTitle.trim()
@@ -446,8 +515,10 @@
     await advance(state, {phase:'submitted'});
     save.click();
     await pause(1000);
-    // A final confirmation may appear after saving; never confirm an unrelated modal.
-    const confirm = actionButton(['Confirm','Yes'], true);
+    // Never auto-confirm a Publish or Delete dialog during a replacement.
+    const safeDialog=candidates('[role=dialog], .ant-modal, .modal, .el-dialog')
+      .find(el=>/save|update|changes/i.test(el.textContent) && !/publish|delete|trash/i.test(el.textContent));
+    const confirm=dialogButton(safeDialog,['Confirm','Yes']);
     if (confirm) confirm.click();
     return scheduleRun(1700);
   }
@@ -455,11 +526,13 @@
     const job = state.job;
     if (job.index >= job.entries.length) {
       job.status = 'complete';
-      state.note = 'All delete clicks were submitted. Verify the Published/Trash list manually.';
+      state.note = 'All chapter removals were confirmed by you in Inkstone. Review the Published and Trash lists once more.';
       sessionStorage.removeItem(SESSION_KEY);
       return putState(state);
     }
     if (job.phase === 'list') return navigateToEntry(state);
+    if (['await-manual-delete','await-delete-verification'].includes(job.phase)) return;
+    if (job.phase !== 'editor') throw new Error(`Unexpected deletion phase ${job.phase}; no action taken.`);
     const chapter = await ensureEditor();
     if (!chapter) throw new Error('Existing chapter editor not found; deletion refused.');
     const entry = job.entries[job.index];
@@ -468,18 +541,28 @@
     if (!backup || !state.backupExported) throw new Error('No exported backup; deletion refused.');
     if (normalizedBody(chapter.body) !== normalizedBody(backup.body)) throw new Error('Chapter content changed since backup; deletion refused.');
     const deleteButton = actionButton(['Delete Chapter','Move to Trash','Delete']);
-    if (!deleteButton) throw new Error('No unique chapter delete button found. Deletion not attempted.');
-    await advance(state,{phase:'delete-confirm'});
+    if (!deleteButton) {
+      job.status='paused';job.phase='await-manual-delete';
+      state.note=`No unique Delete/Trash control found for chapter ${entry.number}. Nothing was deleted automatically. Remove this chapter manually in Inkstone, verify it appears in Trash, return to Published, then press "I verified deletion; next".`;
+      sessionStorage.removeItem(SESSION_KEY);
+      return putState(state);
+    }
+    // Persist a safe paused checkpoint *before* Inkstone's Delete click can
+    // navigate away or replace the page.
+    job.status='paused';job.phase='await-delete-verification';
+    state.note=`Delete was prepared for chapter ${entry.number}. Verify removal in Inkstone Trash before continuing.`;
+    await putState(state);
+    sessionStorage.removeItem(SESSION_KEY);
     deleteButton.click();
     await pause(700);
     const dialog = candidates('[role=dialog], .ant-modal, .modal, .el-dialog')
       .find(el => /delete|trash|remove/i.test(el.textContent));
-    if (!dialog) throw new Error('Deletion confirmation dialog not recognized. No confirmation was clicked.');
-    const confirm = actionButton(['Delete','Confirm','Yes','Move to Trash'],true);
-    if (!confirm) throw new Error('No unique deletion confirmation button. Confirm manually if desired.');
-    confirm.click();
-    await pause(800);
-    return returnToList(state);
+    const confirm = dialogButton(dialog,['Delete','Confirm','Yes','Move to Trash']);
+    if(confirm) confirm.click();
+    job.status='paused';job.phase='await-delete-verification';
+    state.note=`Chapter ${entry.number}: ${confirm?'A deletion confirmation was clicked.':'A Delete control was clicked, but the confirmation dialog could not be identified.'} Check Published and Trash in Inkstone. Return to Published; press "I verified deletion; next" ONLY after you see that the chapter was removed.`;
+    sessionStorage.removeItem(SESSION_KEY);
+    return putState(state);
   }
   async function runUpload(state) {
     const job = state.job;
@@ -511,15 +594,16 @@
       if (!dialog) throw new Error('Publish confirmation dialog missing. Check whether chapter was published before resuming.');
       if (job.delivery==='schedule') {
         const slot=job.entries[job.index];
-        const nativeTimerVerified=await preparePublishTimer(slot);
-        if (!job.autoConfirmSchedule || !nativeTimerVerified) {
+        let timerVerified=false, timerProblem='';
+        try {timerVerified=await preparePublishTimer(slot);} catch(error) {timerProblem=error.message;}
+        if (!job.autoConfirmSchedule || !timerVerified) {
           job.status='paused';job.phase='await-manual-confirm';
-          state.note=`Enter LOCAL ${slot.berlinDate.replace(/-/g,'/')} ${slot.berlinTime} in the Publish Timer. The RED converted value should show ${slot.inkstoneDate.replace(/\//g,'-')} ${slot.inkstoneTime} (GMT+8). Confirm manually, verify it is scheduled, then press "I confirmed; next".`;
+          state.note=`${timerProblem ? timerProblem+'\n' : ''}Enter LOCAL ${slot.berlinDate.replace(/-/g,'/')} ${slot.berlinTime} in the Publish Timer. The RED converted value should show ${slot.inkstoneDate.replace(/\//g,'-')} ${slot.inkstoneTime} (GMT+8). Confirm manually, verify it is scheduled, then press "I confirmed; next".`;
           sessionStorage.removeItem(SESSION_KEY);
           return putState(state);
         }
       }
-      const confirm = actionButton(['Confirm','Publish','Yes'], true);
+      const confirm = dialogButton(dialog,['Confirm','Publish','Yes']);
       if (!confirm) throw new Error('Publish confirmation button missing.');
       await advance(state,{phase:'after-publish'});
       confirm.click();
@@ -530,9 +614,9 @@
       throw new Error('Confirm the timer on WebNovel first, then use "I confirmed; next".');
     }
     if (job.phase === 'after-publish' || job.phase === 'after-save') {
-      await advance(state,{index:job.index+1,phase:'create'});
+      await advance(state,{index:job.index+1,phase:'create',readyAt:Date.now()+job.delayMs});
       if(job.listUrl && location.href!==job.listUrl)return reroute(job.listUrl);
-      scheduleRun(DELAY);
+      scheduleRun(job.delayMs);
       return;
     }
     const file = state.files.find(f=>f.name === job.entries[job.index].fileName);
@@ -546,7 +630,7 @@
     if ((current.title.trim() && !/^untitled$/i.test(current.title.trim())) || current.body.trim()) {
       throw new Error('This editor is not blank. Refusing to overwrite existing text during Upload. Open Create Chapter and resume.');
     }
-    fillEditor(file.name,file.text);
+    await fillEditor(file.name,file.text);
     if (job.delivery==='draft') {
       const save=actionButton(['Save','Save Draft','Save as Draft']);
       if (!save) throw new Error('Chapter text filled, but Save/Save Draft button not uniquely found. Save manually; do not continue blindly.');
@@ -574,6 +658,10 @@
       }
       if (sessionStorage.getItem(SESSION_KEY) !== job.id) {
         await fail('The tab session changed; press Resume to continue safely.');
+        return;
+      }
+      if (job.readyAt && Date.now() < job.readyAt) {
+        scheduleRun(Math.max(150,job.readyAt-Date.now()));
         return;
       }
       checkBook(job);
@@ -641,6 +729,7 @@
       entries, listUrl:mode==='upload' && uploadEditor ? '' : location.href,
       index:0, phase:stage === 'backup' ? 'list' : mode === 'upload' ? (uploadEditor?'editor':'create') : 'list',
       status:'running', delivery:state.delivery, autoConfirmSchedule:state.autoConfirmSchedule,
+      delayMs:Core.normalizeDelayMs(state.delayMs),readyAt:0,
       schemaVersion:SCHEMA_VERSION, bookId:bookId()
     };
   }
@@ -667,6 +756,16 @@
       const tiny=[...document.querySelectorAll('iframe.tox-edit-area__iframe')].length;
       return amend(state=>{
         state.note=`Editor diagnostics: title=${title ? title.tagName+' '+(title.className||title.placeholder||'') : 'NOT FOUND'}; body=${body ? body.tagName+' '+(body.id||body.className||'') : 'NOT FOUND'}; TinyMCE iframes=${tiny}. No changes made.`;
+      });
+    }
+    if (action==='debug-workflow') {
+      const editor=readEditor();
+      const timer=publishDialog();
+      const fields=timer ? findTimerInputs(timer) : {date:null,time:null};
+      const del=actionButton(['Delete Chapter','Move to Trash','Delete']);
+      const save=actionButton(['Save','Save Draft','Save Changes','Update','Submit']);
+      return amend(state=>{
+        state.note=`Inkstone diagnostic (no chapter text): editor=${editor?'detected':'missing'}; save/update=${save?'detected':'missing/ambiguous'}; delete=${del?'detected':'missing/ambiguous'}; publish timer=${timer?'open':'closed'}; date field=${fields.date?(fields.date.readOnly?'custom':'editable'):'missing'}; time field=${fields.time?(fields.time.readOnly?'custom':'editable'):'missing'}. If stuck, send a screenshot of this status.`;
       });
     }
     if (action==='scan') return amend(state=>{
@@ -703,7 +802,7 @@
       if (!job || job.status!=='paused' || job.mode!=='upload' || job.delivery!=='schedule'
         || !['await-manual-confirm','publish-confirm'].includes(job.phase)) return;
       if (!confirm('Have you manually confirmed this chapter in Inkstone AND verified its scheduled date/time? Only then continue.')) return;
-      job.index+=1;job.phase='create';job.status='running';
+      job.index+=1;job.phase='create';job.status='running';job.readyAt=Date.now()+job.delayMs;
       s.note='Manual scheduling confirmed by user. Continuing with next chapter.';
       sessionStorage.setItem(SESSION_KEY,job.id);
       await putState(s);
@@ -720,7 +819,7 @@
       await ensureEditor();
       const current=readEditor();
       if (current?.body.trim() && !confirm('This editor already contains text. Replace its UNSAVED content with the first file?')) return;
-      const result=fillEditor(file.name,file.text);
+      const result=await fillEditor(file.name,file.text);
       return amend(state=>{state.note=`Filled ${result.title}; nothing was published. Review and save manually.`;});
     }
     if (action==='backup') {
@@ -754,6 +853,7 @@
         }
         if (!confirm(`Back up and REPLACE ${s.matches.length} published chapters with the selected Markdown files? The extension first saves every original in Chrome, then verifies each saved replacement.`)) return;
         const ready=s.job?.mode==='replace' && s.job.status==='backups-ready'
+          && s.job.schemaVersion===SCHEMA_VERSION
           && s.backups.length===s.job.entries.length;
         if (ready) {
           s.job.stage='apply';s.job.index=0;s.job.phase='list';s.job.status='running';
@@ -768,6 +868,10 @@
         await putState(s);return scheduleRun(500);
       }
       if (!s.job || s.job.status!=='backups-ready' || s.backups.length!==s.job.entries.length) return;
+      if(s.job.schemaVersion!==SCHEMA_VERSION) {
+        s.note='This deletion queue came from an older version. Clear the queue and repeat the scan/backup first.';
+        return putState(s);
+      }
       if (s.job.mode==='delete') {
         if (!s.backupExported) return amend(state=>{state.note='Download the safety backup before deleting chapters.';});
         const phrase=`DELETE ${s.job.entries.length}`;
@@ -779,6 +883,19 @@
       s.note=`Applying ${s.job.mode} actions. Do not switch novels or close the tab.`;
       sessionStorage.setItem(SESSION_KEY,s.job.id);
       await putState(s);return scheduleRun(500);
+    }
+    if (action==='mark-deleted') {
+      const job=s.job;
+      if(!job || job.mode!=='delete' || job.status!=='paused'
+        || !['await-manual-delete','await-delete-verification'].includes(job.phase)) return;
+      const chapter=job.entries[job.index];
+      if(!confirm(`Confirm ONLY if chapter ${chapter.number} is gone from Published and visible in Inkstone Trash. Was the removal verified manually?`)) return;
+      job.index+=1;job.phase='list';job.status='running';job.readyAt=Date.now()+job.delayMs;
+      s.note=`You confirmed chapter ${chapter.number} was removed. Waiting before the next chapter.`;
+      sessionStorage.setItem(SESSION_KEY,job.id);
+      await putState(s);
+      if(location.href!==job.listUrl)return reroute(job.listUrl);
+      return scheduleRun(job.delayMs);
     }
     if (action==='upload') {
       if (!s.files.length || s.files.some(f=>Core.chapterNumber(f.name)===null)) return amend(state=>{state.note='All file names need chapter numbers.';});
@@ -819,6 +936,14 @@
           else if (target.id==='inkstone-pro-perday') await amend(s=>{s.schedulePerDay=Number(target.value);});
           else if (target.id==='inkstone-pro-times') await amend(s=>{s.scheduleTimes=target.value;});
           else if (target.id==='inkstone-pro-auto-timer') await amend(s=>{s.autoConfirmSchedule=target.checked;});
+          else if (target.id==='inkstone-pro-speed') await amend(s=>{
+            s.delayMs=target.value==='custom' ? Core.normalizeDelayMs(s.customDelayMs) : Core.normalizeDelayMs(target.value);
+            if(s.job?.status==='paused') s.job.delayMs=s.delayMs;
+          });
+          else if (target.id==='inkstone-pro-custom-speed') await amend(s=>{
+            s.customDelayMs=Core.normalizeDelayMs(target.value);s.delayMs=s.customDelayMs;
+            if(s.job?.status==='paused') s.job.delayMs=s.delayMs;
+          });
         } catch (err) {await fail(err.message);}
       });
     }
@@ -840,7 +965,7 @@
     root.innerHTML=`
       <div class="ip-brand-header">
         <div class="ip-brand-icon" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><rect x="2" y="2" width="124" height="124" rx="24" fill="#681D32"/><path d="M64 93 C52 85 40 83 25 85 V43 C40 40 52 43 64 51 C76 43 88 40 103 43 V85 C88 83 76 85 64 93 Z" fill="none" stroke="#EBD6AC" stroke-width="5" stroke-linejoin="round"/><path d="M64 51 V93 M36 56 C44 55 51 57 56 60 M92 56 C84 55 77 57 72 60" fill="none" stroke="#EBD6AC" stroke-width="3" stroke-linecap="round"/><path d="M97 23 L100 30 L107 33 L100 36 L97 43 L94 36 L87 33 L94 30 Z" fill="#FBECCB"/></svg></div>
-        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.3.3</span> · Drag to move</div></div>
+        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.4.0</span> · Drag to move</div></div>
         <button class="ip-small ip-position-reset" data-ip="reset-position" title="Reset panel to top-right corner" aria-label="Reset panel position">↖</button>
         <button class="ip-small ip-minimize" data-ip="min" aria-label="${minimized?'Expand':'Minimize'} Chapter Studio">${minimized?'Open':'−'}</button>
       </div>
@@ -848,6 +973,15 @@
       <div class="ip-tabs">${['upload','replace','delete'].map(mode=>`<button class="${state.mode===mode?'ip-tab-on':''}" name="mode-tab" data-mode="${mode}" ${job?.status==='running'?'disabled':''}>${mode==='upload'?'Upload':mode==='replace'?'Replace':'Delete'}</button>`).join('')}</div>
       <label>Markdown chapters (${state.files.length})</label>
       <input id="inkstone-pro-files" type="file" accept=".md,text/markdown" multiple ${job?.status==='running'?'disabled':''}>
+      <label for="inkstone-pro-speed">Chapter processing speed</label>
+      <select id="inkstone-pro-speed" ${job?.status==='running'?'disabled':''}>
+        <option value="1500" ${state.delayMs===1500?'selected':''}>Fast — 1.5 seconds between chapters</option>
+        <option value="3000" ${state.delayMs===3000?'selected':''}>Balanced — 3 seconds (recommended)</option>
+        <option value="5000" ${state.delayMs===5000?'selected':''}>Careful — 5 seconds</option>
+        <option value="custom" ${![1500,3000,5000].includes(state.delayMs)?'selected':''}>Custom delay</option>
+      </select>
+      ${![1500,3000,5000].includes(state.delayMs)?`<label for="inkstone-pro-custom-speed">Custom delay (milliseconds)</label><input id="inkstone-pro-custom-speed" type="number" min="1000" max="15000" step="500" value="${Number(state.delayMs)}" ${job?.status==='running'?'disabled':''} aria-label="Custom chapter delay in milliseconds">`:''}
+      <div class="ip-muted">Delay applies between chapters; editor readiness and save verification may take longer.</div>
       <div class="ip-list">${(state.files.length?state.files.slice(0,15).map(f=>`<div class="ip-item">${esc(f.name)}</div>`).join(''):'<div class="ip-muted">Select CH01 - Title.md, Chapter 02 - Title.md, …</div>')}${state.files.length>15?`<div class="ip-item">…and ${state.files.length-15} more</div>`:''}</div>
       ${state.mode!=='upload' ? `
         <div class="ip-actions"><button data-ip="scan" ${job?.status==='running'?'disabled':''}>① Scan visible chapter list</button></div>
@@ -883,8 +1017,8 @@
       `}
       <div class="ip-banner ip-status">${esc(state.note)}</div>
       ${job?`<div class="ip-row"><span>${esc(job.mode)} · ${esc(job.stage)} · ${esc(job.status)}</span><span>${job.index}/${job.entries.length}</span></div><div class="ip-progress"><span style="width:${progress(job)}%"></span></div>`:''}
-      <div class="ip-actions">${job?.status==='running'?'<button data-ip="pause">Pause</button>':job?.status==='paused'?'<button data-ip="resume">Resume</button>':''}${job?.status==='paused'&&job.mode==='upload'&&job.delivery==='schedule'&&['await-manual-confirm','publish-confirm'].includes(job.phase)?'<button data-ip="mark-next">I confirmed; next</button>':''}<button data-ip="clear">Clear local queue</button></div>
-      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Confirm exact chapter matches before editing. Replacement makes automatic local backups. External backup downloads remain available. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.3.3</span></div></div>`;
+      <div class="ip-actions">${job?.status==='running'?'<button data-ip="pause">Pause</button>':job?.status==='paused'&&!['await-manual-delete','await-delete-verification'].includes(job.phase)?'<button data-ip="resume">Resume</button>':''}${job?.status==='paused'&&job.mode==='upload'&&job.delivery==='schedule'&&['await-manual-confirm','publish-confirm'].includes(job.phase)?'<button data-ip="mark-next">I confirmed; next</button>':''}${job?.status==='paused'&&job.mode==='delete'&&['await-manual-delete','await-delete-verification'].includes(job.phase)?'<button data-ip="mark-deleted">I verified deletion; next</button>':''}<button data-ip="debug-workflow">Inspect Inkstone UI</button><button data-ip="clear">Clear local queue</button></div>
+      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Confirm exact chapter matches before editing. Replacement makes automatic local backups. External backup downloads remain available. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.4.0</span></div></div>`;
     restorePanelPosition(root);
     root.querySelectorAll('[name="mode-tab"]').forEach(btn=>btn.addEventListener('click',()=>amend(s=>{
       if(s.job?.status==='running')return;

@@ -68,7 +68,7 @@
   <path d="M895 159 Q909 156 911 165 Q922 155 931 159 L931 183 Q922 179 911 187 Q902 180 895 183 Z M911 165 L911 187" fill="none" stroke="#EBD6AC" stroke-width="2.5"/>
   <text x="949" y="153" fill="#D9BC87" font-size="10" font-weight="800" letter-spacing="2">BRINKHAGEN SOFTWARE</text>
   <text x="949" y="178" class="white" font-size="21" font-weight="800">Chapter Studio</text>
-  <text x="950" y="197" fill="#C0A9B7" font-size="12">For Inkstone · v0.3.2</text>
+  <text x="950" y="197" fill="#C0A9B7" font-size="12">For Inkstone · v0.4.0</text>
   <line x1="883" y1="211" x2="1182" y2="211" stroke="#795065"/>
   <rect x="883" y="230" width="96" height="38" rx="9" fill="#321D2A" stroke="#735166"/>
   <text x="931" y="255" fill="#F1E7ED" text-anchor="middle" font-size="15">Upload</text>
@@ -80,6 +80,7 @@
   <text x="884" y="298" class="white" font-size="17" font-weight="700">Markdown chapters (1)</text>
   <rect x="883" y="311" width="299" height="46" rx="9" fill="#211720" stroke="#755267"/>
   <text x="900" y="340" fill="#E9D7DE" font-size="16">CH01 - The First Page.md</text>
+  <text x="885" y="371" fill="#D9BC87" font-size="10">Speed: Balanced · 3 seconds between chapters</text>
   <rect x="883" y="375" width="299" height="42" rx="10" fill="#31222D" stroke="#78536B"/>
   <text x="1032" y="402" class="white" text-anchor="middle" font-size="16">① Scan chapter list</text>
   <text x="883" y="446" fill="#D7BBA0" font-size="14">1 matched · 0 problems</text>

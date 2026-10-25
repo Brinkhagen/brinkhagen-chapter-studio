@@ -9,6 +9,15 @@ test('floating panel stays within viewport bounds', () => {
   assert.deepEqual(core.clampPanelPosition(400,400,364,500,320,480),{left:8,top:8});
 });
 
+test('chapter pacing refuses dangerously short and malformed delays', () => {
+  assert.equal(core.normalizeDelayMs(1500),1500);
+  assert.equal(core.normalizeDelayMs('3000'),3000);
+  assert.equal(core.normalizeDelayMs(15000),15000);
+  for(const value of [0,200,999,15001,NaN,Infinity,'fast',3200.5]) {
+    assert.throws(()=>core.normalizeDelayMs(value),/between/);
+  }
+});
+
 test('chapter numbers match uploader-friendly names', () => {
   assert.equal(core.chapterNumber('CH001 - First Light.md'), 1);
   assert.equal(core.chapterNumber('Chapter 21 - Fallout.md'), 21);

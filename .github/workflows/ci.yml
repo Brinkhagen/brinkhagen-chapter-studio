@@ -18,11 +18,12 @@ jobs:
         run: |
           node --check src/core.js
           node --check src/content.js
+          node --check src/editor-bridge.js
       - name: Run unit tests
-        run: node --test tests/core.test.cjs tests/branding.test.cjs
+        run: node --test tests/core.test.cjs tests/branding.test.cjs tests/editor-bridge.test.cjs
       - name: Check manifest and icons
         run: |
-          node -e "const m=require('./manifest.json'); if(m.manifest_version!==3||m.version!=='0.3.3')process.exit(1)"
+          node -e "const m=require('./manifest.json'); if(m.manifest_version!==3||m.version!=='0.4.0')process.exit(1)"
           test -f assets/icon16.png
           test -f assets/icon32.png
           test -f assets/icon48.png
