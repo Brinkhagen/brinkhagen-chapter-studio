@@ -1,56 +1,38 @@
-# BRINKHAGEN Chapter Studio — for Inkstone (v0.3.0)
+# BRINKHAGEN Chapter Studio
 
 ![BRINKHAGEN Chapter Studio](assets/github-banner.svg)
 
-**A BRINKHAGEN project.** Independently developed Chrome Manifest V3 extension for managing *your own* WebNovel Inkstone chapters. It is **not** an official WebNovel tool and does **not** contain or redistribute code from the public `Eisenheim-00/inkstone-uploader` project.
+<p align="center"><img src="assets/logo.svg" width="96" alt="BRINKHAGEN Chapter Studio logo"></p>
 
-<img src="assets/logo.svg" width="92" alt="BRINKHAGEN Chapter Studio logo">
+<p align="center"><strong>Professional chapter management for WebNovel Inkstone.</strong><br>Import. Organize. Schedule. Publish.</p>
 
-## Highlights
+**BRINKHAGEN Chapter Studio** is a Chrome extension that helps authors manage Markdown chapter uploads, draft queues, scheduled releases and published chapter revisions from one workspace.
 
-- Chapter import from individually numbered Markdown files (`.md`).
-- Save as Draft (confirmed working in an author-account test), publish immediately, or prepare timed releases.
-- Match existing chapters before replacement/deletion; back up the original chapter data first.
-- Release planning for Berlin time, with a GMT+8 verification preview.
-- Local Chrome storage for interrupted queues; no service-specific API keys required.
-- Branded BRINKHAGEN interface and Chrome toolbar icon in burgundy and champagne.
+## Features
 
-**Version:** `0.3.0` · **Status:** technical preview · **Ownership:** © 2026 BRINKHAGEN. All rights reserved. See [NOTICE.md](NOTICE.md).
+| Workflow | Capabilities |
+| --- | --- |
+| **Markdown Import** | Import multiple numbered `.md` chapters, automatically ordered by chapter number. |
+| **Draft Management** | Save imported chapters as unpublished drafts. |
+| **Publication** | Publish immediately or prepare releases through the Inkstone Publish Timer. |
+| **Release Planner** | Set a start date, chapters per day and daily publishing times. Export a CSV schedule. |
+| **Chapter Editing** | Match existing chapter numbers with local Markdown files before applying replacements. |
+| **Backup & Recovery** | Capture original chapter data and download backups before editing or deleting. |
+| **Session Continuity** | Store imported chapters and queue progress locally in Chrome; resume a paused workflow. |
 
-## Status and limitations (read before using)
+## Installation
 
-- **Local source/package:** installable and syntax-tested. Chapter-number parsing and matching have automated unit tests.
-- **Live Inkstone compatibility:** a user verified the **Save as Draft** flow. Replace, Delete, and automatic timing still lack complete signed-in end-to-end verification. The site may use different buttons or editor markup than the extension can recognize. A paused operation is safer than guessing.
-- **Editor fix v0.2.1:** recognizes Inkstone's chapter title input and the TinyMCE rich-text area inside its iframe. Also recognizes an already open blank editor when resuming a stopped import. `Debug Editor` reports whether both fields are detected without changing chapter content.
-- **Scheduling fix v0.2.2:** Inkstone's current Publish Timer dialog asks for **LOCAL date/time**, then converts automatically to GMT+8. Earlier versions incorrectly instructed users to enter GMT+8 values. Enter Berlin time in the dialog; the resulting red GMT+8 time is only a verification value.
-- **Backup:** captures title, plain body, and (where applicable) original HTML from a published chapter editor, and exports them to a JSON file. The backup is not an official WebNovel export format.
-- **Replace:** attempts to update published chapters using the existing Inkstone editor's `Update`/`Save` actions. Each chapter requires unique chapter number matching and an unchanged existing body after backup. Updates are submitted but not independently verified by a second WebNovel fetch.
-- **Delete:** attempts to use an explicitly labeled chapter-delete button and confirmation dialog, only after backing up every target. Whether Inkstone exposes that control for your chapter type must be checked on your account. **Do not use this mode with contracted/premium chapters without confirming platform rules.**
-- **Upload:** supports fill-only and attempted auto-publish. Site-specific navigation/confirmation must be tested. For reliable live bulk uploading today, your existing uploader may remain preferable.
-- **Upload delivery modes:** Save as Draft, Publish Now, and Schedule via Inkstone Publish Timer. Draft saving has been confirmed on a live account; the other actions need further testing with your Inkstone UI.
-- **Scheduling:** generate and export a CSV plan using release times in `Europe/Berlin`, converted to Inkstone's documented `GMT+8` publishing clock. German summer/winter time is handled, including a deliberate rejection of ambiguous/nonexistent times during the clock change.
-- **Scheduled publication confirmations:** custom site date/time picker controls cannot safely be assumed to accept programmatically typed values. The extension pauses for manual confirmation if it cannot verify standard native fields; even when the fields visually match, automated final confirmation is **off by default**. Batch scheduling may therefore need some manual steps until live-tested.
-- **Only visible titles are scanned.** If your Published list has multiple pages or virtual scrolling, expose all desired chapter rows before scanning, or process a smaller batch. Missing or duplicate chapter numbers block Replace/Delete.
-- A browser restart is designed to pause active work rather than silently continue publishing or deleting. You can use Resume only after checking the current WebNovel screen.
-- The extension keeps imported text and backups in your local Chrome profile, not on our servers. **Clear local queue** removes those copies from extension storage.
+1. Download and extract `BRINKHAGEN_Chapter_Studio_v0.3.0.zip` into a permanent folder on your computer.
+2. Open `chrome://extensions` in Google Chrome.
+3. Enable **Developer mode** and choose **Load unpacked**.
+4. Select the extracted `inkstone-uploader-pro` folder containing `manifest.json`.
+5. Open your WebNovel Inkstone chapter management page. The **Chapter Studio** panel appears automatically.
 
-## Install on Windows Chrome
+**Updating from an earlier version:** Copy the new files into the same extension folder, reload the extension in `chrome://extensions`, then refresh the Inkstone tab. The Chrome storage key remains unchanged, so imported files and settings stay available in the same browser profile.
 
-1. Unzip `BRINKHAGEN_Chapter_Studio_v0.3.0.zip` to a **permanent folder** such as `Documents\BRINKHAGEN-Chapter-Studio`. Do not load the ZIP itself, and do not delete or move the extracted folder after installation.
-2. Open `chrome://extensions` in Chrome.
-3. Turn **Developer mode** on (top right).
-4. Choose **Load unpacked** (German: *Entpackte Erweiterung laden*).
-5. Select the extracted folder that **directly contains `manifest.json`**.
-6. Open WebNovel Inkstone and a book's **Published** chapter list. The floating panel will appear on supported Inkstone pages.
-7. If you have the older `Chapter Uploader` installed, disable it while testing PRO so the two floating panels do not interfere.
+## Chapter filenames
 
-### Updating from the old PRO version
-
-Unzip the updated files **over your existing extension folder**, then open `chrome://extensions`, click **Reload** on the extension, and reload your Inkstone tab. The local queue uses the same storage key, so branding does not reset your current settings or imported chapters. Before resuming a paused publication job, inspect the active editor and selected novel.
-
-## File names
-
-Accepts Markdown file names such as:
+Use clear sequential names:
 
 ```text
 CH01 - The Awakening.md
@@ -58,77 +40,72 @@ CH02 - The Storm.md
 Chapter 003 - A New Rule.md
 ```
 
-The leading `CH` / `Chapter` number identifies the published chapter. The **full filename without `.md`** becomes the title if replaced. A first Markdown heading like `# Chapter 01 - The Awakening` is omitted from the chapter body. Markdown is simplified to plain text and paragraphs. Markdown hyperlinks are converted to readable text with URLs.
+The chapter number determines processing order and matches existing chapter records. The filename without `.md` becomes the chapter title; a matching first Markdown heading is removed from the body.
 
-## Safest Replace test
+## Publishing workflows
 
-1. Prepare **one** Markdown file for a chapter you can safely modify.
-2. In Inkstone, open the correct book, go to **Published**, and make sure the target chapter appears in the list.
-3. Choose **Replace**, import the file, and click **Scan visible chapter list**.
-4. Carefully inspect the matched existing chapter title and the filename. If matching is incomplete, stop.
-5. Click **Capture original chapters**. This reads the original title and content. It should not change them.
-6. Click **Download backup JSON** and verify that the file exists on your PC and contains the original chapter.
-7. Click **Apply replacements** and confirm. If the extension pauses, inspect the screen; do not blindly retry a submitted update.
-8. Open the published chapter as a reader and verify its title, paragraph breaks, complete text and Author's Note.
-9. Only after this succeeds, try a small multi-chapter batch.
+### Save as Draft
 
-## Delete flow
+1. Open the appropriate novel in Inkstone and choose **Upload** in Chapter Studio.
+2. Import one or more `.md` files.
+3. Select **Save as Draft** and start the import.
+4. Review the resulting drafts in Inkstone.
 
-You can import `.md` filenames to select individual deletion targets, **or** scan the Published list and click **Use ALL scanned chapters as delete targets**. That selects only the chapters currently visible in your list, not necessarily every chapter in the novel. Confirm that pagination and virtual scrolling did not hide additional chapters.
+### Publish immediately
 
-The same scan → backup → export steps are mandatory. Afterwards you must type **`DELETE N`** where `N` is the number of matched chapters, then confirm a final dialog. The extension refuses to delete if it sees a different chapter number or changed chapter body. Deleted chapters may be recoverable in Inkstone Trash for a limited period, but **do not rely on this as the only backup**.
+Select **Publish Now** when the imported chapters are approved for immediate release. Check the novel and chapter sequence before starting.
 
-## Upload flow
+### Schedule a release plan
 
-- Open the novel's chapter overview (recommended), or a blank chapter editor.
-- Import your `.md` files, select **Upload**.
-- Choose one delivery mode:
-  - **Save as Draft**: attempt to fill and click Inkstone **Save/Save Draft**, then create the next chapter. Drafts should not be publicly visible. If Save is not recognized, the run pauses with text still in the editor.
-  - **Publish Now**: click Publish, then Confirm. This can make chapters publicly visible immediately.
-  - **Schedule**: set the first publishing date, number of chapters per day, and *exactly that many* local Berlin time slots (for example `08:00, 12:00, 16:00, 20:00`). Review the generated preview and export the schedule CSV before starting. The extension attempts to enable **Publish Timer** and fill **local Berlin** date/time. Inkstone displays the converted GMT+8 date/time below in red. If a custom date picker is detected, the extension pauses and tells you the precise LOCAL fields to select manually. Only after you have confirmed the chapter *in Inkstone* and checked that it appears scheduled should you choose **I confirmed; next**.
-- `Fill first file only` copies the first file into the editor without saving or publishing; use this to test title/body selectors.
-- The **BETA: Auto-confirm native timer dialogs** checkbox is off by default and should be used only after a successful test chapter. It still refuses to auto-confirm nonnative/ambiguous date-time controls.
+1. Select **Schedule — Publish Timer**.
+2. Choose the first publication date, chapters per day and the local Berlin times.
+3. Review the generated preview and optionally export the plan as CSV.
+4. Confirm the date and time in Inkstone when prompted; the extension can pause for manual verification of custom calendar controls.
 
-### Example: 100 chapters at 4 per day
-
-Choose **Schedule**, set `4` chapters/day, enter four Berlin times, and select the start date. The extension creates a 25-day plan and displays both German time and GMT+8 for each chapter. As soon as WebNovel accepts a scheduled chapter, the server manages its later release; this does not require leaving Chrome open until release time. **Chrome must stay open while the initial uploading/scheduling operation is running.**
-
-### Scheduling time zones
-
-Inkstone documentation and publisher guides describe a **GMT+8** clock for timers, but the live Inkstone dialog (observed October 2026) says its date/time input fields are based on the **user's local time** and are *automatically converted* to GMT+8. This extension plans from `Europe/Berlin`, puts BERLIN values in the picker, and displays GMT+8 purely for verification. Example for October 26, 2026:
-
-| Where | Date | Time |
-| --- | --- | --- |
-| Inkstone picker (Berlin local) | `2026/10/26` | `08:00` |
-| Red converted preview (GMT+8) | `2026-10-26` | `15:00` |
-
-**Never enter `15:00` in the local picker for the example above**, since Inkstone would add the seven-hour timezone conversion again. Chrome must use Europe/Berlin as its local timezone for this scheduling workflow, and the extension refuses scheduling if it detects another timezone. The final red GMT+8 preview must match the planned converted value before confirmation.
-
-## Stop, resume, troubleshoot
-
-- Press **Pause** any time to stop automatic progression.
-- `Resume` continues the last stored step; **first verify** that the current page is the expected book/chapter and no operation was already completed.
-- If the panel is missing: reload the page, check `chrome://extensions`, and navigate to the Inkstone editor or Published list.
-- If you see `Create Chapter button not found` while already on the blank editor, update to v0.2.1 and click **Debug Editor**. Both `title` and `body` should be detected; if not, share the diagnostic text so the selectors can be adjusted.
-- If an editor or button is not detected, it pauses. Take a screenshot of the *relevant Inkstone UI* (hide private information) so selectors can be adjusted safely.
-- Clear the queue only after exporting backups and finishing the task; it removes imported text, scan metadata, backups, and progress.
-
-## Engineering notes
-
-Chrome MV3 content script, no external network services, dependencies, remote code, or credentials. Source files are intentionally included. `src/core.js` holds the chapter parser/matcher and Markdown conversion for unit testing. The UI automation is intentionally conservative about unique matches, book IDs when available, existing-content changes, and save/delete button ambiguity.
-
-**Not affiliated with WebNovel. Use on chapters you own or are authorized to manage. Test with one non-premium chapter before using in bulk.**
-
-### Repository structure
+Default example for four chapters per day:
 
 ```text
-assets/             Brand logo, GitHub cover art, Chrome extension icons
-src/core.js         Pure chapter parsing, matching, scheduling
-src/content.js      Inkstone interactions and user interface
-src/panel.css       BRINKHAGEN theme
-tests/              Logic and optional browser smoke tests
-manifest.json       Chrome Manifest V3
-NOTICE.md           Copyright and non-affiliation notice
+Start date: 2026-10-26
+Chapters/day: 4
+Release times: 08:00, 12:00, 16:00, 20:00
+Timezone: Europe/Berlin
 ```
 
-Run `node --test tests/core.test.cjs tests/branding.test.cjs` to execute the self-contained logic and branding tests. The optional UI smoke test requires a locally installed browser runtime and is not a substitute for signed-in Inkstone testing.
+Inkstone's Publish Timer accepts **local browser time** and displays its automatically converted GMT+8 value. For example, `2026-10-26 08:00` Berlin time is shown as `2026-10-26 15:00 GMT+8` in the converted preview. Enter the Berlin time in the picker, not the converted GMT+8 time.
+
+### Replace or delete chapters
+
+For existing chapters, use the guided workflow:
+
+1. Open the relevant chapter list.
+2. Import the target `.md` files or select visible chapters for deletion.
+3. **Scan** and verify exact chapter-number matches.
+4. **Capture original chapters**, then **Download backup JSON**.
+5. Apply the requested changes after checking the backup and confirmation screen.
+
+Chapter matching is intentionally strict. Missing or duplicate chapter numbers stop the operation rather than risking changes to the wrong chapter. Scanning covers the visible list, so check pagination when working with large novels.
+
+## Development
+
+```bash
+node --check src/core.js
+node --check src/content.js
+node --test tests/core.test.cjs tests/branding.test.cjs
+```
+
+The project uses Chrome Manifest V3 with JavaScript and CSS; it does not require a build step or a separate server.
+
+```text
+assets/                 Logo, icon files and GitHub banner
+src/core.js             Chapter parsing, matching and release planning
+src/content.js          Inkstone workflow and panel logic
+src/panel.css           BRINKHAGEN visual theme
+tests/                  Automated logic and branding checks
+.github/workflows/       Continuous integration
+manifest.json           Chrome extension manifest
+CHANGELOG.md            Version history
+```
+
+---
+
+<p align="center">© 2026 <strong>BRINKHAGEN</strong> · All rights reserved.</p>
