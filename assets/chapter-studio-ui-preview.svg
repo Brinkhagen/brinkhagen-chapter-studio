@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">BRINKHAGEN Chapter Studio interface illustration</title>
+  <desc id="desc">An illustrative preview of a chapter list, matching workflow and the branded Chapter Studio extension panel. Not a screenshot of a live WebNovel session.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#121019"/><stop offset="1" stop-color="#24121B"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#401A2A"/><stop offset="1" stop-color="#1B1018"/></linearGradient>
+    <linearGradient id="button" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#EED7AA"/><stop offset="1" stop-color="#C69D61"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#681D32"/><stop offset="1" stop-color="#9B4564"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#000" flood-opacity="0.35"/></filter>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#B87A83" opacity="0.12"/></pattern>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif}
+      .muted{fill:#99919C}
+      .white{fill:#F9F5F4}
+      .gold{fill:#EBD6AC}
+      .small{font-size:15px}
+      .label{font-size:14px;letter-spacing:2px;font-weight:700}
+      .row{font-size:20px;fill:#F0E9EB}
+    </style>
+  </defs>
+  <rect width="1280" height="720" fill="url(#background)"/>
+  <rect width="1280" height="720" fill="url(#dots)"/>
+  <circle cx="1150" cy="60" r="270" fill="#681D32" opacity="0.13"/>
+  <rect x="40" y="40" width="1200" height="640" rx="26" fill="#191720" stroke="#573642" filter="url(#shadow)"/>
+
+  <rect x="40" y="40" width="1200" height="62" rx="26" fill="#23202A"/>
+  <rect x="40" y="80" width="1200" height="22" fill="#23202A"/>
+  <circle cx="74" cy="71" r="7" fill="#8B4055"/><circle cx="97" cy="71" r="7" fill="#B58355"/><circle cx="120" cy="71" r="7" fill="#667A73"/>
+  <text x="153" y="77" fill="#D2BEBF" font-size="17" font-weight="600">AUTHOR WORKSPACE</text>
+  <text x="854" y="76" fill="#AFA2AD" font-size="13" text-anchor="end" letter-spacing="2">CHAPTER MANAGEMENT</text>
+
+  <text x="82" y="150" class="gold label">YOUR NOVEL</text>
+  <text x="82" y="196" class="white" font-size="34" font-weight="750">The Next Chapter</text>
+  <text x="83" y="226" class="muted" font-size="17">One workspace. Clear chapter status. Consistent releases.</text>
+  <line x1="82" y1="262" x2="838" y2="262" stroke="#51444F"/>
+
+  <rect x="82" y="291" width="756" height="64" rx="10" fill="#2E2530"/>
+  <text x="106" y="331" class="white" font-size="18" font-weight="700">Chapter</text>
+  <text x="634" y="331" class="white" font-size="18" font-weight="700">Status</text>
+  <g>
+    <rect x="82" y="363" width="756" height="70" rx="9" fill="#26212B"/>
+    <rect x="101" y="383" width="38" height="30" rx="7" fill="#681D32"/>
+    <text x="120" y="405" class="gold" font-size="16" font-weight="700" text-anchor="middle">01</text>
+    <text x="154" y="406" class="row">The First Page</text>
+    <rect x="618" y="379" width="180" height="40" rx="20" fill="#343127"/>
+    <text x="708" y="405" fill="#EBD6AC" font-size="17" font-weight="650" text-anchor="middle">Ready to review</text>
+  </g>
+  <g>
+    <rect x="82" y="441" width="756" height="70" rx="9" fill="#26212B"/>
+    <rect x="101" y="461" width="38" height="30" rx="7" fill="#681D32"/>
+    <text x="120" y="483" class="gold" font-size="16" font-weight="700" text-anchor="middle">02</text>
+    <text x="154" y="484" class="row">The Hidden Signal</text>
+    <rect x="618" y="457" width="180" height="40" rx="20" fill="#27362F"/>
+    <text x="708" y="483" fill="#B6E4C0" font-size="17" font-weight="650" text-anchor="middle">Draft saved</text>
+  </g>
+  <g>
+    <rect x="82" y="519" width="756" height="70" rx="9" fill="#26212B"/>
+    <rect x="101" y="539" width="38" height="30" rx="7" fill="#681D32"/>
+    <text x="120" y="561" class="gold" font-size="16" font-weight="700" text-anchor="middle">03</text>
+    <text x="154" y="562" class="row">A Different Ending</text>
+    <rect x="618" y="535" width="180" height="40" rx="20" fill="#2D2B3B"/>
+    <text x="708" y="561" fill="#CCC5FF" font-size="17" font-weight="650" text-anchor="middle">In the queue</text>
+  </g>
+  <text x="82" y="631" class="muted" font-size="15">Chapter Studio preview · Illustrative interface, not a live Inkstone screenshot</text>
+
+  <rect x="867" y="122" width="331" height="518" rx="22" fill="url(#panel)" stroke="#A2647A" stroke-opacity="0.6" filter="url(#shadow)"/>
+  <rect x="883" y="140" width="55" height="55" rx="13" fill="#681D32" stroke="#DDBD89" stroke-opacity="0.7"/>
+  <path d="M895 159 Q909 156 911 165 Q922 155 931 159 L931 183 Q922 179 911 187 Q902 180 895 183 Z M911 165 L911 187" fill="none" stroke="#EBD6AC" stroke-width="2.5"/>
+  <text x="949" y="153" fill="#D9BC87" font-size="10" font-weight="800" letter-spacing="2">BRINKHAGEN SOFTWARE</text>
+  <text x="949" y="178" class="white" font-size="21" font-weight="800">Chapter Studio</text>
+  <text x="950" y="197" fill="#C0A9B7" font-size="12">For Inkstone · v0.3.2</text>
+  <line x1="883" y1="211" x2="1182" y2="211" stroke="#795065"/>
+  <rect x="883" y="230" width="96" height="38" rx="9" fill="#321D2A" stroke="#735166"/>
+  <text x="931" y="255" fill="#F1E7ED" text-anchor="middle" font-size="15">Upload</text>
+  <rect x="984" y="230" width="96" height="38" rx="9" fill="url(#accent)" stroke="#AF6A83"/>
+  <text x="1032" y="255" fill="#F8E5EE" text-anchor="middle" font-size="15" font-weight="650">Replace</text>
+  <rect x="1085" y="230" width="96" height="38" rx="9" fill="#321D2A" stroke="#735166"/>
+  <text x="1133" y="255" fill="#F1E7ED" text-anchor="middle" font-size="15">Delete</text>
+
+  <text x="884" y="298" class="white" font-size="17" font-weight="700">Markdown chapters (1)</text>
+  <rect x="883" y="311" width="299" height="46" rx="9" fill="#211720" stroke="#755267"/>
+  <text x="900" y="340" fill="#E9D7DE" font-size="16">CH01 - The First Page.md</text>
+  <rect x="883" y="375" width="299" height="42" rx="10" fill="#31222D" stroke="#78536B"/>
+  <text x="1032" y="402" class="white" text-anchor="middle" font-size="16">① Scan chapter list</text>
+  <text x="883" y="446" fill="#D7BBA0" font-size="14">1 matched · 0 problems</text>
+  <rect x="883" y="466" width="299" height="44" rx="9" fill="#292028" stroke="#826078"/>
+  <text x="900" y="493" fill="#EADAE2" font-size="15">#01 · The First Page ✓</text>
+  <rect x="883" y="527" width="299" height="56" rx="11" fill="url(#button)"/>
+  <text x="1032" y="551" text-anchor="middle" fill="#311928" font-size="16" font-weight="800">② Back up &amp; replace</text>
+  <text x="1032" y="570" text-anchor="middle" fill="#4F313B" font-size="13">matched chapters</text>
+  <text x="883" y="612" fill="#CAB1BC" font-size="12">© 2026 BRINKHAGEN</text>
+</svg>

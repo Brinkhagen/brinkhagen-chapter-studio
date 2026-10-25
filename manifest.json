@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BRINKHAGEN Chapter Studio",
   "short_name": "Chapter Studio",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "BRINKHAGEN publishing workspace for Inkstone: Markdown chapters, drafts, schedules, backups and editing.",
   "icons": {
     "16": "assets/icon16.png",

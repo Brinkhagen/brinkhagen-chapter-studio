@@ -7,7 +7,7 @@
   const KEY = 'inkstoneProStateV1';
   const SESSION_KEY = 'inkstoneProRunId';
   const DELAY = 1000;
-  const SCHEMA_VERSION = 2;
+  const SCHEMA_VERSION = 3;
   let busy = false;
   let scheduled = null;
   let minimized = false;
@@ -78,6 +78,7 @@
     }
   }
   const normalizedBody = text => String(text ?? '').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').trim();
+  const comparableBody = text => normalizedBody(text).replace(/\s+/g,' ');
   function candidates(selector, predicate = () => true) {
     return [...document.querySelectorAll(selector)].filter(el => visible(el) && predicate(el));
   }
@@ -291,10 +292,10 @@
     Object.assign(state.job, patch);
     await putState(state);
   }
-  async function navigateToEntry(state) {
+  async function navigateToEntry(state, editorPhase = 'editor') {
     const job = state.job, entry = job.entries[job.index];
     if (!entry) return;
-    await advance(state, {phase:'editor'});
+    await advance(state, {phase:editorPhase});
     const url = localUrl(entry.target?.href);
     if (url) return reroute(url);
     if (location.href !== job.listUrl) return reroute(job.listUrl);
@@ -312,8 +313,21 @@
   async function runBackup(state) {
     const job = state.job;
     if (job.index >= job.entries.length) {
+      if (job.mode === 'replace' && job.autoApply) {
+        if (state.backups.length !== job.entries.length) {
+          throw new Error('The automatic backup did not capture every chapter. Nothing will be replaced.');
+        }
+        job.stage = 'apply';
+        job.index = 0;
+        job.phase = 'list';
+        state.note = `All ${state.backups.length} original chapters are safely stored in Chrome. Starting replacement and verification now.`;
+        await putState(state);
+        return scheduleRun(550);
+      }
       job.status = 'backups-ready';
-      state.note = `Captured ${state.backups.length} backups. Export the backup before applying ${job.mode} actions.`;
+      state.note = job.mode === 'delete'
+        ? `Saved ${state.backups.length} original chapters. Download the safety backup before deleting.`
+        : `Saved ${state.backups.length} original chapters. Nothing has been replaced yet. You can now press "Replace matched chapters".`;
       sessionStorage.removeItem(SESSION_KEY);
       return putState(state);
     }
@@ -332,24 +346,50 @@
     const job = state.job;
     if (job.index >= job.entries.length) {
       job.status = 'complete';
-      state.note = 'All update actions were submitted. Check published chapters on WebNovel manually.';
+      state.note = `Verified ${job.entries.length} saved replacements by reopening their editors. Check the published list on WebNovel as a final review.`;
       sessionStorage.removeItem(SESSION_KEY);
       return putState(state);
     }
     if (job.phase === 'list') return navigateToEntry(state);
+    if (job.phase === 'verify-list') return navigateToEntry(state, 'verify-editor');
+    const entry = job.entries[job.index];
+    const file = state.files.find(f => f.name === entry.fileName);
+    if (!file) throw new Error(`Missing local file ${entry.fileName}.`);
+    const expectedText = Core.markdownToPlain(file.text);
+    const expectedTitle = Core.titleFromFilename(file.name);
+    if (job.phase === 'submitted') {
+      // Never count a Save click as success. Reopen the chapter from the list
+      // and compare the persisted text before advancing to the next file.
+      await pause(1500);
+      await advance(state, {phase:'verify-list'});
+      return reroute(job.listUrl);
+    }
+    if (job.phase === 'verify-editor') {
+      const persisted = await ensureEditor();
+      if (!persisted || comparableBody(persisted.body) !== comparableBody(expectedText)
+        || persisted.title.trim() !== expectedTitle.trim()) {
+        throw new Error(`Chapter ${entry.number} was not verified after reopening. STOPPED. Check the chapter manually; no further chapters will be changed.`);
+      }
+      state.note = `Verified saved chapter ${entry.number} (${job.index+1}/${job.entries.length}).`;
+      await putState(state);
+      return returnToList(state);
+    }
+    if (job.phase !== 'editor') throw new Error(`Unexpected replace phase ${job.phase}. Stopped safely.`);
     const chapter = await ensureEditor();
     if (!chapter) throw new Error('Editor not found.');
-    const entry = job.entries[job.index];
     if (Core.chapterNumber(chapter.title) !== entry.number) throw new Error(`Chapter mismatch: expected ${entry.number}, found ${chapter.title}.`);
     const backup = state.backups.find(b => b.number === entry.number);
     if (!backup) throw new Error(`Missing original backup for chapter ${entry.number}.`);
     if (normalizedBody(chapter.body) !== normalizedBody(backup.body)) {
       throw new Error(`Chapter ${entry.number} changed since the backup. Refresh your scan and backup before replacing.`);
     }
-    const file = state.files.find(f => f.name === entry.fileName);
-    if (!file) throw new Error(`Missing local file ${entry.fileName}.`);
     fillEditor(file.name, file.text);
     await pause(300);
+    const staged = readEditor();
+    if (!staged || staged.title.trim() !== expectedTitle.trim()
+      || comparableBody(staged.body) !== comparableBody(expectedText)) {
+      throw new Error(`Chapter ${entry.number} text was not filled correctly. No Save action was clicked. Review the editor manually.`);
+    }
     const save = actionButton(['Update','Save','Save Changes','Confirm Changes','Submit']);
     if (!save) throw new Error(`Chapter ${entry.number} was filled but no unique Save/Update button was identified. Save manually, then resume with caution.`);
     await advance(state, {phase:'submitted'});
@@ -358,8 +398,7 @@
     // A final confirmation may appear after saving; never confirm an unrelated modal.
     const confirm = actionButton(['Confirm','Yes'], true);
     if (confirm) confirm.click();
-    await pause(800);
-    return returnToList(state);
+    return scheduleRun(1700);
   }
   async function runDelete(state) {
     const job = state.job;
@@ -649,14 +688,40 @@
       return amend(state=>{state.backupExported=true;state.note='Backup download initiated. Confirm it exists on your computer before applying changes.';});
     }
     if (action==='apply') {
-      if (!s.job || s.job.status!=='backups-ready' || !s.backupExported || s.backups.length!==s.job.entries.length) return;
+      if (s.mode==='replace') {
+        if (s.job?.status==='running' || s.job?.status==='paused') return;
+        bindMatches(s);
+        if (!s.files.length || s.errors.length || s.matches.length!==s.files.length) {
+          s.note='All Markdown files must have ONE unique chapter match. Scan the Published list and check the preview first.';
+          return putState(s);
+        }
+        const shortFile=s.files.find(f=>Core.markdownToPlain(f.text).length<25);
+        if (shortFile) {
+          s.note=`${shortFile.name} is too short. Replacement requires at least 25 characters to protect published chapters.`;
+          return putState(s);
+        }
+        if (!confirm(`Back up and REPLACE ${s.matches.length} published chapters with the selected Markdown files? The extension first saves every original in Chrome, then verifies each saved replacement.`)) return;
+        const ready=s.job?.mode==='replace' && s.job.status==='backups-ready'
+          && s.backups.length===s.job.entries.length;
+        if (ready) {
+          s.job.stage='apply';s.job.index=0;s.job.phase='list';s.job.status='running';
+          s.note='Originals already saved. Replacing and verifying chapters now.';
+        } else {
+          s.backups=[];s.backupExported=false;
+          s.job=makeJob(s,'backup','replace');
+          s.job.autoApply=true;
+          s.note='Backing up every original chapter first. Replacement begins automatically after all backups are captured.';
+        }
+        sessionStorage.setItem(SESSION_KEY,s.job.id);
+        await putState(s);return scheduleRun(500);
+      }
+      if (!s.job || s.job.status!=='backups-ready' || s.backups.length!==s.job.entries.length) return;
       if (s.job.mode==='delete') {
+        if (!s.backupExported) return amend(state=>{state.note='Download the safety backup before deleting chapters.';});
         const phrase=`DELETE ${s.job.entries.length}`;
         const input=document.getElementById('inkstone-pro-delete-phrase');
         if (input?.value !== phrase) return amend(state=>{state.note=`Type ${phrase} exactly to enable deletion.`;});
         if (!confirm(`LAST WARNING: Delete ${s.job.entries.length} published chapters? Verify the downloaded backup first.`)) return;
-      } else {
-        if (!confirm(`Overwrite ${s.job.entries.length} published chapters with your local Markdown files?`)) return;
       }
       s.job.stage='apply';s.job.index=0;s.job.phase='list';s.job.status='running';
       s.note=`Applying ${s.job.mode} actions. Do not switch novels or close the tab.`;
@@ -712,6 +777,9 @@
     const entries=state.mode==='upload'?state.files:state.matches;
     const mapped=state.errors.length===0 && state.matches.length===state.files.length && state.files.length>0;
     const backupReady=job?.status==='backups-ready' && state.backups.length===job.entries.length;
+    const applyReady=state.mode==='replace'
+      ? mapped && job?.status!=='running' && job?.status!=='paused'
+      : backupReady && state.backupExported;
     let schedule=[],scheduleError='';
     if(state.delivery==='schedule' && state.files.length) {
       try {schedule=scheduleFor(state);} catch(error) {scheduleError=error.message;}
@@ -719,7 +787,7 @@
     root.innerHTML=`
       <div class="ip-brand-header">
         <div class="ip-brand-icon" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><rect x="2" y="2" width="124" height="124" rx="24" fill="#681D32"/><path d="M64 93 C52 85 40 83 25 85 V43 C40 40 52 43 64 51 C76 43 88 40 103 43 V85 C88 83 76 85 64 93 Z" fill="none" stroke="#EBD6AC" stroke-width="5" stroke-linejoin="round"/><path d="M64 51 V93 M36 56 C44 55 51 57 56 60 M92 56 C84 55 77 57 72 60" fill="none" stroke="#EBD6AC" stroke-width="3" stroke-linecap="round"/><path d="M97 23 L100 30 L107 33 L100 36 L97 43 L94 36 L87 33 L94 30 Z" fill="#FBECCB"/></svg></div>
-        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.3.0</span></div></div>
+        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.3.2</span></div></div>
         <button class="ip-small ip-minimize" data-ip="min" aria-label="${minimized?'Expand':'Minimize'} Chapter Studio">${minimized?'Open':'−'}</button>
       </div>
       <div class="ip-brand-divider"></div>
@@ -732,10 +800,13 @@
         ${state.mode==='delete'?'<div class="ip-actions"><button data-ip="select-all-deletion" '+(!state.chapters.length?'disabled':'')+'>Use ALL scanned chapters as delete targets</button></div>':''}
         <div class="ip-muted">${state.chapters.length} found · ${state.matches.length} matched · ${state.errors.length} problems. Open the book’s <b>Published</b> list first.</div>
         <div class="ip-list">${state.matches.slice(0,12).map(m=>`<div class="ip-item ip-ok">#${m.number}: ${esc(m.fileName)} ↔ ${esc(m.currentTitle)}</div>`).join('')}${state.errors.slice(0,12).map(t=>`<div class="ip-item ip-error">${esc(t)}</div>`).join('')}${!state.matches.length&&!state.errors.length?'<div class="ip-muted">Scan the Published list to create an exact preview.</div>':''}</div>
-        <div class="ip-actions"><button data-ip="backup" class="ip-primary" ${!mapped || job?.status==='running'?'disabled':''}>② Capture original chapters</button></div>
-        <div class="ip-actions"><button data-ip="export" ${!state.backups.length?'disabled':''}>③ Download backup JSON (${state.backups.length})</button></div>
+        ${state.mode==='replace'?'<div class="ip-muted">One click after scanning: back up originals → replace → reopen and check saved text.</div>':''}
+        ${state.mode==='delete'?`<div class="ip-actions"><button data-ip="backup" class="ip-primary" ${!mapped || job?.status==='running'?'disabled':''}>② Back up original chapters</button></div>`:''}
+        <div class="ip-actions"><button data-ip="export" ${!state.backups.length?'disabled':''}>Download safety backup (${state.backups.length})${state.mode==='replace'?' · optional':''}</button></div>
+        ${state.mode==='replace'?`<div class="ip-actions"><button data-ip="backup" ${!mapped || job?.status==='running'?'disabled':''}>Back up only (optional)</button></div>`:''}
         ${state.mode==='delete'?`<label>To delete, type <b>DELETE ${job?.entries?.length||state.matches.length}</b></label><input id="inkstone-pro-delete-phrase" type="text" placeholder="Type exact confirmation">`:''}
-        <div class="ip-actions"><button data-ip="apply" class="${state.mode==='delete'?'ip-danger':'ip-primary'}" ${!backupReady || !state.backupExported?'disabled':''}>④ ${state.mode==='delete'?'Delete matched chapters':'Apply replacements'}</button></div>
+        <div class="ip-actions"><button data-ip="apply" class="${state.mode==='delete'?'ip-danger':'ip-primary'}" ${!applyReady?'disabled':''}>${state.mode==='delete'?'③ Delete matched chapters':'② Back up & replace matched chapters'}</button></div>
+        ${backupReady && state.mode==='replace'?'<div class="ip-muted">Ready: originals saved in Chrome. Press Replace to begin; a safety file downloads automatically. The tool verifies each saved chapter before moving on.</div>':''}
       `:`
         <label for="inkstone-pro-delivery">After importing chapters</label>
         <select id="inkstone-pro-delivery" ${job?.status==='running'?'disabled':''}>
@@ -759,7 +830,7 @@
       <div class="ip-banner ip-status">${esc(state.note)}</div>
       ${job?`<div class="ip-row"><span>${esc(job.mode)} · ${esc(job.stage)} · ${esc(job.status)}</span><span>${job.index}/${job.entries.length}</span></div><div class="ip-progress"><span style="width:${progress(job)}%"></span></div>`:''}
       <div class="ip-actions">${job?.status==='running'?'<button data-ip="pause">Pause</button>':job?.status==='paused'?'<button data-ip="resume">Resume</button>':''}${job?.status==='paused'&&job.mode==='upload'&&job.delivery==='schedule'&&['await-manual-confirm','publish-confirm'].includes(job.phase)?'<button data-ip="mark-next">I confirmed; next</button>':''}<button data-ip="clear">Clear local queue</button></div>
-      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Match unique chapter numbers and export backups before editing. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.3.0</span></div></div>`;
+      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Confirm exact chapter matches before editing. Replacement makes automatic local backups. External backup downloads remain available. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.3.2</span></div></div>`;
     root.querySelectorAll('[name="mode-tab"]').forEach(btn=>btn.addEventListener('click',()=>amend(s=>{
       if(s.job?.status==='running')return;
       s.mode=btn.dataset.mode;s.job=null;s.backups=[];s.backupExported=false;s.note=`Selected ${s.mode} mode.`;
