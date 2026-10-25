@@ -133,7 +133,19 @@
     return {date:slot.berlinDate.replace(/-/g,'/'),time:slot.berlinTime};
   }
 
-  const api = Object.freeze({chapterNumber, titleFromFilename, markdownToPlain, normalizeTitle, pairChapters, berlinTimeToUtc, createSchedule, localTimerFields});
+  function clampPanelPosition(left, top, panelWidth, panelHeight, viewportWidth, viewportHeight) {
+    const margin = 8;
+    const maxX = Math.max(margin, viewportWidth - panelWidth - margin);
+    const maxY = Math.max(margin, viewportHeight - panelHeight - margin);
+    const x = Number.isFinite(left) ? left : margin;
+    const y = Number.isFinite(top) ? top : margin;
+    return {
+      left: Math.round(Math.max(margin, Math.min(x, maxX))),
+      top: Math.round(Math.max(margin, Math.min(y, maxY)))
+    };
+  }
+
+  const api = Object.freeze({chapterNumber, titleFromFilename, markdownToPlain, normalizeTitle, pairChapters, berlinTimeToUtc, createSchedule, localTimerFields, clampPanelPosition});
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.InkstoneProCore = api;
 })();

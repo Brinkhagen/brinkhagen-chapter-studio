@@ -5,6 +5,7 @@
 
   const Core = window.InkstoneProCore;
   const KEY = 'inkstoneProStateV1';
+  const PANEL_POSITION_KEY = 'inkstoneProPanelPositionV1';
   const SESSION_KEY = 'inkstoneProRunId';
   const DELAY = 1000;
   const SCHEMA_VERSION = 3;
@@ -12,6 +13,56 @@
   let scheduled = null;
   let minimized = false;
   let latest = null;
+  let panelPosition = null;
+  let panelDrag = null;
+
+  function positionPanel(root, left, top) {
+    const next = Core.clampPanelPosition(left, top, root.offsetWidth, root.offsetHeight,
+      window.innerWidth, window.innerHeight);
+    panelPosition = next;
+    root.style.setProperty('left', `${next.left}px`, 'important');
+    root.style.setProperty('top', `${next.top}px`, 'important');
+    root.style.setProperty('right', 'auto', 'important');
+  }
+  function restorePanelPosition(root) {
+    if (panelPosition) positionPanel(root, panelPosition.left, panelPosition.top);
+  }
+  function resetPanelPosition() {
+    panelPosition = null;
+    const root = document.getElementById('inkstone-pro-root');
+    if (root) {
+      root.style.removeProperty('left');
+      root.style.removeProperty('top');
+      root.style.removeProperty('right');
+    }
+    chrome.storage.local.remove(PANEL_POSITION_KEY).catch(err=>console.warn('Panel position reset:',err));
+  }
+  function installPanelDrag(root) {
+    root.addEventListener('pointerdown', e => {
+      const header = e.target.closest('.ip-brand-header');
+      if (!header || e.target.closest('button, a, input, select, textarea') || e.button !== 0 || !e.isPrimary) return;
+      const box = root.getBoundingClientRect();
+      panelDrag = {pointerId:e.pointerId, startX:e.clientX, startY:e.clientY, left:box.left, top:box.top};
+      root.setPointerCapture(e.pointerId);
+      root.classList.add('ip-dragging');
+      e.preventDefault();
+    });
+    root.addEventListener('pointermove', e => {
+      if (!panelDrag || panelDrag.pointerId !== e.pointerId) return;
+      positionPanel(root, panelDrag.left + e.clientX - panelDrag.startX,
+        panelDrag.top + e.clientY - panelDrag.startY);
+    });
+    const finish = e => {
+      if (!panelDrag || panelDrag.pointerId !== e.pointerId) return;
+      panelDrag = null;
+      root.classList.remove('ip-dragging');
+      if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
+      if (panelPosition) chrome.storage.local.set({[PANEL_POSITION_KEY]:panelPosition})
+        .catch(err=>console.warn('Panel position save:',err));
+    };
+    root.addEventListener('pointerup', finish);
+    root.addEventListener('pointercancel', finish);
+  }
 
   function initialStartDate() {
     return new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'})
@@ -608,6 +659,7 @@
   }
   async function handleAction(action) {
     const s = await getState();
+    if (action==='reset-position') {resetPanelPosition();return;}
     if (action==='min') {minimized=!minimized;return render(s);}
     if (action==='debug-editor') {
       const title=findTitleInput();
@@ -749,6 +801,7 @@
     if (!root) {
       root=document.createElement('section');root.id='inkstone-pro-root';
       document.documentElement.append(root);
+      installPanelDrag(root);
       root.addEventListener('click', e=>{
         const btn=e.target.closest('[data-ip]');
         if(btn)handleAction(btn.getAttribute('data-ip')).catch(err=>fail(err.message));
@@ -787,7 +840,8 @@
     root.innerHTML=`
       <div class="ip-brand-header">
         <div class="ip-brand-icon" aria-hidden="true"><svg viewBox="0 0 128 128" focusable="false"><rect x="2" y="2" width="124" height="124" rx="24" fill="#681D32"/><path d="M64 93 C52 85 40 83 25 85 V43 C40 40 52 43 64 51 C76 43 88 40 103 43 V85 C88 83 76 85 64 93 Z" fill="none" stroke="#EBD6AC" stroke-width="5" stroke-linejoin="round"/><path d="M64 51 V93 M36 56 C44 55 51 57 56 60 M92 56 C84 55 77 57 72 60" fill="none" stroke="#EBD6AC" stroke-width="3" stroke-linecap="round"/><path d="M97 23 L100 30 L107 33 L100 36 L97 43 L94 36 L87 33 L94 30 Z" fill="#FBECCB"/></svg></div>
-        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.3.2</span></div></div>
+        <div class="ip-brand-text"><div class="ip-overline">BRINKHAGEN SOFTWARE</div><div class="ip-title">Chapter Studio</div><div class="ip-brand-subtitle">For Inkstone <span class="ip-version">v0.3.3</span> · Drag to move</div></div>
+        <button class="ip-small ip-position-reset" data-ip="reset-position" title="Reset panel to top-right corner" aria-label="Reset panel position">↖</button>
         <button class="ip-small ip-minimize" data-ip="min" aria-label="${minimized?'Expand':'Minimize'} Chapter Studio">${minimized?'Open':'−'}</button>
       </div>
       <div class="ip-brand-divider"></div>
@@ -830,7 +884,8 @@
       <div class="ip-banner ip-status">${esc(state.note)}</div>
       ${job?`<div class="ip-row"><span>${esc(job.mode)} · ${esc(job.stage)} · ${esc(job.status)}</span><span>${job.index}/${job.entries.length}</span></div><div class="ip-progress"><span style="width:${progress(job)}%"></span></div>`:''}
       <div class="ip-actions">${job?.status==='running'?'<button data-ip="pause">Pause</button>':job?.status==='paused'?'<button data-ip="resume">Resume</button>':''}${job?.status==='paused'&&job.mode==='upload'&&job.delivery==='schedule'&&['await-manual-confirm','publish-confirm'].includes(job.phase)?'<button data-ip="mark-next">I confirmed; next</button>':''}<button data-ip="clear">Clear local queue</button></div>
-      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Confirm exact chapter matches before editing. Replacement makes automatic local backups. External backup downloads remain available. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.3.2</span></div></div>`;
+      <div class="ip-foot"><div class="ip-safety">WORKFLOW NOTE: Confirm exact chapter matches before editing. Replacement makes automatic local backups. External backup downloads remain available. Active jobs pause safely when Chrome restarts.</div><div class="ip-copyright"><span>© 2026 BRINKHAGEN · All rights reserved.</span><span>Chapter Studio v0.3.3</span></div></div>`;
+    restorePanelPosition(root);
     root.querySelectorAll('[name="mode-tab"]').forEach(btn=>btn.addEventListener('click',()=>amend(s=>{
       if(s.job?.status==='running')return;
       s.mode=btn.dataset.mode;s.job=null;s.backups=[];s.backupExported=false;s.note=`Selected ${s.mode} mode.`;
@@ -839,8 +894,26 @@
 
   chrome.storage.onChanged.addListener((changes,area)=>{
     if(area==='local'&&changes[KEY]?.newValue)render(changes[KEY].newValue);
+    if(area==='local'&&changes[PANEL_POSITION_KEY]&&!panelDrag) {
+      const saved = changes[PANEL_POSITION_KEY].newValue;
+      if(saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+        panelPosition = saved;
+        const root = document.getElementById('inkstone-pro-root');
+        if(root) restorePanelPosition(root);
+      } else if (!saved) {
+        panelPosition = null;
+        const root = document.getElementById('inkstone-pro-root');
+        if(root) for(const property of ['left','top','right']) root.style.removeProperty(property);
+      }
+    }
   });
-  getState().then(s=>{
+  window.addEventListener('resize',()=>{
+    const root = document.getElementById('inkstone-pro-root');
+    if(root) restorePanelPosition(root);
+  });
+  Promise.all([getState(),chrome.storage.local.get(PANEL_POSITION_KEY)]).then(([s,settings])=>{
+    const saved = settings[PANEL_POSITION_KEY];
+    if(saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) panelPosition = saved;
     latest=s;
     render(s);
     if(s.job?.status==='running')scheduleRun(1200);

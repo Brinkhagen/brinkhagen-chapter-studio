@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3 — Movable floating window (2026-10-25)
+
+- Drag the Chapter Studio header to move the floating panel anywhere within the browser viewport.
+- Remembers the panel position through Chrome local storage, including tab or page navigation.
+- Adds a one-click ↖ button to restore the default top-right position.
+- Keeps the minimize button independent of the drag gesture, and clamps positions when the window changes size.
+
 ## 0.3.2 — Single-click replacement start (2026-10-25)
 
 - After scanning, **Back up & replace matched chapters** starts the complete process with one confirmation.

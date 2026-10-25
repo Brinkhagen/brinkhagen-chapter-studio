@@ -11,7 +11,7 @@ test('manifest uses BRINKHAGEN branding and valid Chrome icons', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(base, 'manifest.json'), 'utf8'));
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.name, 'BRINKHAGEN Chapter Studio');
-  assert.equal(manifest.version, '0.3.2');
+  assert.equal(manifest.version, '0.3.3');
   for (const size of [16, 32, 48, 128]) {
     const file = path.join(base, manifest.icons[size]);
     const icon = fs.readFileSync(file);
@@ -32,5 +32,8 @@ test('panel includes logo, version and copyright while preserving stored queue',
   assert.match(script, /verify-editor/);
   assert.match(script, /Back up & replace matched chapters/);
   assert.match(script, /job\.autoApply/);
+  assert.match(script, /installPanelDrag/);
+  assert.match(script, /PANEL_POSITION_KEY/);
+  assert.match(script, /reset-position/);
   assert.doesNotMatch(script, /!backupReady \|\| !state\.backupExported/);
 });

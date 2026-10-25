@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 0.3.2" src="https://img.shields.io/badge/version-0.3.2-681D32?style=for-the-badge&amp;labelColor=21151D">
+  <img alt="Version 0.3.3" src="https://img.shields.io/badge/version-0.3.3-681D32?style=for-the-badge&amp;labelColor=21151D">
   <img alt="Chrome Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest_V3-EBD6AC?style=for-the-badge&amp;labelColor=21151D&amp;logo=googlechrome&amp;logoColor=white">
   <img alt="Private beta" src="https://img.shields.io/badge/status-private_beta-BA8B59?style=for-the-badge&amp;labelColor=21151D">
   <img alt="Runs in your browser" src="https://img.shields.io/badge/runtime-local_browser-496E61?style=for-the-badge&amp;labelColor=21151D">
@@ -45,6 +45,7 @@ Writing a novel is difficult enough. Moving dozens of chapters between Markdown 
 - **Plan your cadence.** Configure chapters per day and daily release times, with a schedule preview and CSV export.
 - **Revise existing work carefully.** Match chapter numbers, capture original content before changes, and check saved replacements by reopening them.
 - **Keep progress locally.** Imported content and queue state stay in your Chrome profile, with pause/resume controls.
+- **Move the floating workspace.** Drag the branded top bar wherever it is convenient. Chrome remembers its position, and ↖ resets it to the upper-right corner.
 
 <table>
   <tr>
@@ -71,6 +72,8 @@ Writing a novel is difficult enough. Moving dozens of chapters between Markdown 
 
 The floating panel is designed to stay close to the job at hand:
 
+**Move the panel:** Click and drag the burgundy Chapter Studio header (not its buttons). Release the mouse to remember its location. Use **↖** to return to the default top-right position; use **−** to minimize the panel. The panel stays inside the visible browser window.
+
 | Panel | Purpose |
 | :--- | :--- |
 | **Upload** | Import new Markdown chapters, save drafts, publish, or schedule. |
@@ -82,15 +85,15 @@ The floating panel is designed to stay close to the job at hand:
 
 **Requirements:** Desktop Google Chrome or a Chromium browser that supports unpacked Manifest V3 extensions, access to your own Inkstone author account, and chapter files in UTF-8 Markdown format.
 
-**Install the current source version (v0.3.2):**
+**Install the current source version (v0.3.3):**
 
-1. From this repository, choose **Code → Download ZIP** and extract it to a permanent folder. If you have the standalone `BRINKHAGEN_Chapter_Studio_v0.3.2.zip`, extract that instead.
+1. From this repository, choose **Code → Download ZIP** and extract it to a permanent folder. Make sure the extension folder contains `manifest.json`.
 2. Open `chrome://extensions` in Google Chrome.
 3. Enable **Developer mode**, then click **Load unpacked**.
 4. Select the extracted folder that actually contains `manifest.json` (the repository root, or `inkstone-uploader-pro` inside the standalone ZIP).
-5. Refresh your WebNovel Inkstone chapter management page. The **Chapter Studio v0.3.2** panel should appear.
+5. Refresh your WebNovel Inkstone chapter management page. The **Chapter Studio v0.3.3** panel should appear.
 
-**Already installed an older copy?** If a panel labelled `Inkstone Uploader PRO Independent v0.2.2` or Chapter Studio v0.3.0/v0.3.1 is still running, disable or remove the old installation first. Two installations on the same page can interfere with each other. Never start a new batch while an earlier one is still running. After upgrading, clear unfinished old replacement queues and scan again.
+**Already installed an older copy?** If a panel labelled `Inkstone Uploader PRO Independent v0.2.2` or Chapter Studio v0.3.0–v0.3.2 is still running, disable or remove the old installation first. Two installations on the same page can interfere with each other. Never start a new batch while an earlier one is still running. After upgrading, clear unfinished old replacement queues and scan again.
 
 ### Your first 60 seconds
 

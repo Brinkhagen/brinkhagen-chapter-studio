@@ -2,6 +2,13 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const core = require('../src/core.js');
 
+test('floating panel stays within viewport bounds', () => {
+  assert.deepEqual(core.clampPanelPosition(200,120,364,400,1440,900),{left:200,top:120});
+  assert.deepEqual(core.clampPanelPosition(-100,-20,364,400,1440,900),{left:8,top:8});
+  assert.deepEqual(core.clampPanelPosition(2500,1500,364,400,1440,900),{left:1068,top:492});
+  assert.deepEqual(core.clampPanelPosition(400,400,364,500,320,480),{left:8,top:8});
+});
+
 test('chapter numbers match uploader-friendly names', () => {
   assert.equal(core.chapterNumber('CH001 - First Light.md'), 1);
   assert.equal(core.chapterNumber('Chapter 21 - Fallout.md'), 21);
