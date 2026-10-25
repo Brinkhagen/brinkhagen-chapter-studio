@@ -1,0 +1,10 @@
+# Generated packages and local development artifacts
+*.zip
+node_modules/
+coverage/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+*.log

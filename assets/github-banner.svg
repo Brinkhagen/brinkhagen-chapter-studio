@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">BRINKHAGEN Chapter Studio</title>
+  <desc id="desc">A burgundy and champagne GitHub project banner presenting a premium chapter publishing workspace.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#531B32"/>
+      <stop offset=".53" stop-color="#261521"/>
+      <stop offset="1" stop-color="#140F18"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF0CF"/>
+      <stop offset="1" stop-color="#D9B47B"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4D2939"/>
+      <stop offset="1" stop-color="#2C1B28"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="420" rx="27" fill="url(#bg)"/>
+  <path d="M0 288 C225 150 330 370 580 250 S 960 95 1200 210" fill="none" stroke="#BD8391" stroke-opacity=".10" stroke-width="100"/>
+  <path d="M0 325 C225 187 330 407 580 287 S 960 132 1200 247" fill="none" stroke="#FBE9C3" stroke-opacity=".08" stroke-width="2"/>
+  <rect x="20" y="20" width="1160" height="380" rx="20" stroke="#CBA87D" stroke-opacity=".20" stroke-width="1.5" fill="none"/>
+  <g transform="translate(70 74)">
+    <rect width="78" height="78" rx="17" fill="#73243D" stroke="#E3C797" stroke-opacity=".6"/>
+    <path d="M39 58 C31 53 22 51 13 53 V22 C24 20 31 23 39 28 C47 23 54 20 65 22 V53 C56 51 47 53 39 58 Z" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M39 28 V58 M20 32 L32 35 M58 32 L46 35" stroke="#EDDAAE" stroke-width="2" stroke-linecap="round"/>
+    <path d="M61 8 L63 13 L68 15 L63 17 L61 22 L59 17 L54 15 L59 13 Z" fill="#FFF1CA"/>
+  </g>
+  <text x="166" y="97" fill="#D9B989" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="5">BRINKHAGEN SOFTWARE</text>
+  <text x="70" y="218" fill="#FFF4E4" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2">Chapter Studio</text>
+  <text x="73" y="259" fill="#D5B5C0" font-family="Arial, Helvetica, sans-serif" font-size="19">Precision publishing for Inkstone authors.</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="13" fill="#F0D7AB">
+    <rect x="73" y="298" width="113" height="36" rx="18" fill="#63334A" stroke="#A87A82"/><text x="100" y="321">DRAFTS</text>
+    <rect x="196" y="298" width="152" height="36" rx="18" fill="#63334A" stroke="#A87A82"/><text x="223" y="321">SCHEDULING</text>
+    <rect x="358" y="298" width="121" height="36" rx="18" fill="#63334A" stroke="#A87A82"/><text x="383" y="321">BACKUPS</text>
+  </g>
+  <g transform="translate(733 55)">
+    <rect width="392" height="310" rx="19" fill="url(#panel)" stroke="#956477" stroke-width="1.5"/>
+    <rect x="19" y="19" width="354" height="56" rx="11" fill="#351F2B"/>
+    <circle cx="44" cy="46" r="13" fill="#D6B783"/>
+    <path d="M35 45 L44 50 L53 45 M44 50 V57" fill="none" stroke="#5A2037" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="67" y="43" fill="#EACDA4" font-family="Arial, Helvetica, sans-serif" font-size="10" letter-spacing="2">BRINKHAGEN</text>
+    <text x="67" y="61" fill="#FFF2E5" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700">Chapter Studio</text>
+    <text x="22" y="113" fill="#C4AAB7" font-family="Arial, Helvetica, sans-serif" font-size="12">RELEASE QUEUE</text>
+    <g font-family="Arial, Helvetica, sans-serif" font-size="13">
+      <rect x="20" y="130" width="351" height="43" rx="8" fill="#3D2836"/>
+      <circle cx="40" cy="151" r="5" fill="#A8D7B7"/><text x="57" y="155" fill="#F5E9E5">Chapter 157 · First Signal</text><text x="301" y="155" fill="#B8E0C0" font-size="11">DRAFT</text>
+      <rect x="20" y="180" width="351" height="43" rx="8" fill="#3D2836"/>
+      <circle cx="40" cy="201" r="5" fill="#EBD09E"/><text x="57" y="205" fill="#F5E9E5">Chapter 158 · Aftermath</text><text x="299" y="205" fill="#EBD09E" font-size="11">TIMER</text>
+      <rect x="20" y="230" width="351" height="43" rx="8" fill="#3D2836"/>
+      <circle cx="40" cy="251" r="5" fill="#A8D7B7"/><text x="57" y="255" fill="#F5E9E5">Chapter 159 · New World</text><text x="301" y="255" fill="#B8E0C0" font-size="11">DRAFT</text>
+    </g>
+  </g>
+  <text x="74" y="378" fill="#B99AA6" font-family="Arial, Helvetica, sans-serif" font-size="13">© 2026 BRINKHAGEN</text>
+  <text x="1080" y="385" fill="#BC95A6" font-family="Arial, Helvetica, sans-serif" font-size="11">v0.3.0</text>
+</svg>

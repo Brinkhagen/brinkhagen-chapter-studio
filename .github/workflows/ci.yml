@@ -1,0 +1,29 @@
+name: Chapter Studio Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/core.js
+          node --check src/content.js
+      - name: Run unit tests
+        run: node --test tests/core.test.cjs tests/branding.test.cjs
+      - name: Check manifest and icons
+        run: |
+          node -e "const m=require('./manifest.json'); if(m.manifest_version!==3||m.version!=='0.3.0')process.exit(1)"
+          test -f assets/icon16.png
+          test -f assets/icon32.png
+          test -f assets/icon48.png
+          test -f assets/icon128.png

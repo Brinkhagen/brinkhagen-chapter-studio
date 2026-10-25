@@ -1,0 +1,63 @@
+#inkstone-pro-root {
+  position: fixed !important;
+  z-index: 2147483646 !important;
+  top: 78px !important;
+  right: 18px !important;
+  width: 364px !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: calc(100vh - 94px) !important;
+  overflow: auto !important;
+  color: #faf3f0 !important;
+  background: linear-gradient(155deg, #2d1822 0%, #1c111a 64%, #150f16 100%) !important;
+  border: 1px solid #78465a !important;
+  border-radius: 15px !important;
+  box-shadow: 0 18px 58px rgba(17, 4, 11, .52), inset 0 1px rgba(255, 235, 211, .08) !important;
+  padding: 16px !important;
+  font: 13px/1.48 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  color-scheme: dark;
+}
+#inkstone-pro-root *, #inkstone-pro-root *::before, #inkstone-pro-root *::after { box-sizing: border-box !important; }
+#inkstone-pro-root .ip-brand-header { display:flex; align-items:center; gap:11px; min-height:47px; }
+#inkstone-pro-root .ip-brand-icon { width:49px; height:49px; flex:0 0 49px; border:1px solid rgba(245,222,179,.35); border-radius:11px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.25); }
+#inkstone-pro-root .ip-brand-icon svg { display:block; width:100%; height:100%; }
+#inkstone-pro-root .ip-brand-text { min-width:0; flex:1; }
+#inkstone-pro-root .ip-overline { color:#e0c496; font-size:9px; font-weight:750; line-height:1.4; letter-spacing:2px; }
+#inkstone-pro-root .ip-title { font-size:18px; line-height:1.2; font-weight:800; letter-spacing:-.45px; color:#fff7ee; }
+#inkstone-pro-root .ip-brand-subtitle { margin-top:3px; color:#ceb5bd; font-size:11px; }
+#inkstone-pro-root .ip-version { color:#e8ce9e; margin-left:5px; }
+#inkstone-pro-root .ip-brand-divider { height:1px; margin:14px 0 11px; background:linear-gradient(90deg,#dfbc82 0%,#8c4f62 47%,transparent 100%); opacity:.75; }
+#inkstone-pro-root .ip-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
+#inkstone-pro-root .ip-muted { color:#c3aeb8; font-size:12px; }
+#inkstone-pro-root .ip-pill { background:#55253a; color:#f3d7a7; border-radius:20px; padding:3px 8px; font-size:11px; }
+#inkstone-pro-root .ip-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin:12px 0; padding:4px; background:#190f17; border:1px solid #4b2839; border-radius:10px; }
+#inkstone-pro-root button, #inkstone-pro-root select, #inkstone-pro-root input, #inkstone-pro-root textarea { font:inherit !important; }
+#inkstone-pro-root button { cursor:pointer; border-radius:7px; border:1px solid #805566; background:#452737; color:#fff4ec; padding:7px 10px; transition:background-color .12s,border-color .12s; }
+#inkstone-pro-root button:hover { background:#653349; border-color:#c7a07d; }
+#inkstone-pro-root button:focus-visible, #inkstone-pro-root input:focus-visible, #inkstone-pro-root select:focus-visible { outline:2px solid #f2d5a2 !important; outline-offset:2px; }
+#inkstone-pro-root button:disabled { opacity:.46; cursor:not-allowed; }
+#inkstone-pro-root button.ip-primary { background:#e7c992; border-color:#f7ddab; color:#321b24; font-weight:800; }
+#inkstone-pro-root button.ip-primary:hover { background:#f7dcaa; }
+#inkstone-pro-root button.ip-danger { background:#7e203e; border-color:#ed8495; }
+#inkstone-pro-root button.ip-tab-on { background:#752841; border-color:#be8090; color:#ffe1b2; font-weight:800; }
+#inkstone-pro-root .ip-minimize { align-self:flex-start; margin-left:auto; }
+#inkstone-pro-root label { display:block; color:#f3dfe0; margin:8px 0 4px; font-weight:550; }
+#inkstone-pro-root input[type=file] { display:block; width:100%; font-size:12px; color:#dbc1cc; }
+#inkstone-pro-root input[type=file]::file-selector-button { margin-right:9px; padding:5px 9px; color:#fbeedb; background:#5e3044; border:1px solid #926a77; border-radius:5px; }
+#inkstone-pro-root input[type=text], #inkstone-pro-root input[type=date], #inkstone-pro-root input[type=number], #inkstone-pro-root select { width:100%; min-width:0; border:1px solid #7b4f61; background:#170f17; color:#fff4ee; padding:8px; border-radius:7px; color-scheme:dark; }
+#inkstone-pro-root input[type=checkbox] { margin-right:5px; vertical-align:middle; accent-color:#e2bb83; }
+#inkstone-pro-root .ip-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+#inkstone-pro-root .ip-list { max-height:170px; overflow:auto; background:#140e15; border:1px solid #543142; border-radius:7px; padding:6px; margin-top:8px; }
+#inkstone-pro-root .ip-item { padding:5px; border-bottom:1px solid #382130; font-size:11px; overflow-wrap:anywhere; }
+#inkstone-pro-root .ip-item:last-child { border-bottom:0; }
+#inkstone-pro-root .ip-error { color:#ff9caa; }
+#inkstone-pro-root .ip-ok { color:#afd9bd; }
+#inkstone-pro-root .ip-banner { background:#36212f; border:1px solid #694157; border-radius:8px; padding:9px; margin:9px 0; font-size:12px; }
+#inkstone-pro-root .ip-status { white-space:pre-wrap; overflow-wrap:anywhere; }
+#inkstone-pro-root .ip-progress { height:6px; background:#4d2b3c; border-radius:6px; overflow:hidden; margin:9px 0; }
+#inkstone-pro-root .ip-progress > span { display:block; height:100%; background:linear-gradient(90deg,#bf8a9e,#f0d7a7); transition:width .2s; }
+#inkstone-pro-root .ip-foot { border-top:1px solid #624052; margin-top:13px; padding-top:10px; }
+#inkstone-pro-root .ip-safety { color:#c7abb6; font-size:11px; line-height:1.5; }
+#inkstone-pro-root .ip-copyright { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px; margin-top:10px; padding-top:9px; border-top:1px solid #382331; color:#d6bba0; font-size:10px; }
+#inkstone-pro-root .ip-small { font-size:11px; padding:5px 8px; }
+#inkstone-pro-root.ip-min { max-height:82px !important; overflow:hidden !important; }
+#inkstone-pro-root.ip-min .ip-brand-divider { display:none; }
